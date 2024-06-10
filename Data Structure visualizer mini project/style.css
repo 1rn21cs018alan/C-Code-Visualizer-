@@ -24,11 +24,11 @@ header{
     background-color: #707070;
     top:0;
     height:97vh;
-    width:230px;
+    width:300px;
     
 }  
 .input-fields{
-    padding:10px 10px;
+    padding:1px 10px;
     margin:3px 2px;
     display:flex;
     flex-wrap: wrap;
@@ -40,7 +40,7 @@ header{
 }
 .cin-tag{
     height:279px;
-    width:190px;
+    width:100%;
     padding:61px 32px;
     display:flex;
     justify-content: space-evenly;
@@ -50,7 +50,7 @@ header{
 }
 .cout-tag{
     height:214px;
-    width:186px;
+    width:186%;
     padding:26px 28px;
     display:flex;
     justify-content: space-evenly;
@@ -64,4 +64,7 @@ textarea{
     box-sizing: border-box;
     border:2px solid black;
     background-color: #B0B0B0;
+    width:250px;
+    height:118%;
+    
 }
