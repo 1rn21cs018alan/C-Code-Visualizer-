@@ -1,0 +1,6 @@
+one statement per line. Multiple statements have to be in different lines
+If,for,while,do-while, all must have opening curly brackets in same line
+closing curly bracket must be in seperate line(probably not in do while)
+only supports floating point division inside the expression
+
+scope 0 object variables point to other variables with name "MEMORY_<number>"

@@ -1,6 +1,5 @@
-async function interpret(text,cur_scope=1) {
-    let lines = text.split("\n")
-    datatypeExp = "((" + DataTypes[0] + ")"
+async function interpret(function_start_pointer, scope = 1) {
+    let datatypeExp = "((" + DataTypes[0] + ")"
     for (let i = 1; i < DataTypes.length; i++) {
         datatypeExp += "|(" + DataTypes[i] + ")"
     }
@@ -14,18 +13,21 @@ async function interpret(text,cur_scope=1) {
     regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "(=[\\S\\s]+)?;")
     const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+;")
     const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)?;")
-    let function_start_pointer = 0
-    for (let i = 0; i < lines.length; i++) {
-        let line = lines[i].trim()
-        if (line === "int main(){") {
-            function_start_pointer = i + 1
-            break
+    // let function_start_pointer = 0
+    // for (let i = 0; i < Program.length; i++) {
+    //     let line = Program[i].trim()
+    //     if (line === "int main(){") {
+    //         function_start_pointer = i + 1
+    //         break
+    //     }
+    // }
+    // scope = cur_scope
+    for (let i = function_start_pointer; i < Program.length - 1; i++) {
+        let line = Program[i].trim()
+        if (line === "") {
+            continue;
         }
-    }
-    scope = cur_scope
-    for (let i = function_start_pointer; i < lines.length - 2; i++) {
         await sleep();
-        let line = lines[i].trim()
         if (regex_var_decl.test(line)) {
             let type_data = line.match(datatypeExp)
             let var_names = line.slice(type_data['index'] + type_data[0].length, -1).split(",")
@@ -77,29 +79,39 @@ async function interpret(text,cur_scope=1) {
                         var_data = NULL
                     }
                 }
-                for (let k = 0; k < Variables.length; k++) {
-                    if (Variables[k]['name'] == var_name && (Variables[k]['scope'] == scope || Variables[k]['scope'] == 0)) {
-                        CrashNotif({ "error word": "Variable of same name already exists" })
-                        return
-                        //crashed
-                    }
+                // version 1
+                // for (let k = 0; k < Variables.length; k++) {
+                //     if (Variables[k]['name'] == var_name && (Variables[k]['scope'] == scope || Variables[k]['scope'] == 0)) {
+                //         CrashNotif({ "error word": "Variable of same name already exists" })
+                //         return
+                //         //crashed
+                //     }
+                // }
+                
+                // version 2
+                if(getVariableIndex(var_name,scope)!==undefined){
+                    CrashNotif({ "error word": "Variable of same name already exists" })
+                    return
+                    //crashed
                 }
-
                 console.log("made var")
                 Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': type_data[0], 'scope': scope, 'div': makeNode(0, var_name + ":" + var_data) })
             }
         }
         else if (regex_assign.test(line)) {
             let var_name = line.split("=")[0]
-            let var_data = line.split("=")[1].slice(0, -1)
-            let match = undefined
-            for (let j = 0; j < Variables.length; j++) {
-                if (Variables[j]['name'] == var_name && (Variables[j]['scope'] == scope || Variables[j][scope] == 0))//scope 0=malloced values
-                {
-                    match = j
-                    break
-                }
-            }
+            let var_data = line.slice(var_name.length + 1, -1)
+            var_name = var_name.trim()
+            //verision 1
+            // let match = undefined
+            // for (let j = 0; j < Variables.length; j++) {
+            //     if (Variables[j]['name'] == var_name && (Variables[j]['scope'] == scope || Variables[j]['scope'] == 0))//scope 0=malloced values
+            //     {
+            //         match = j
+            //         break
+            //     }
+            // }
+            let match=getVariableIndex(var_name,scope)
             if (match === undefined) {
                 CrashNotif({ "error word": "No such Variable" })
                 return;
@@ -107,9 +119,10 @@ async function interpret(text,cur_scope=1) {
             }
             else {
                 let type_data = Variables[match]['type']
-                let temp = evaluate(var_data)
+                let temp = evaluate(var_data, scope)
                 if (type_data == temp['type']) {
                     Variables[match]['value'] = temp['value']
+                    //render element
                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
                 }
                 else if (type_data == "int") {
@@ -118,6 +131,7 @@ async function interpret(text,cur_scope=1) {
                     if (Variables[match]['value'] === undefined) {
                         return
                     }
+                    //render element
                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
                 }
                 else if (type_data == "float") {
@@ -126,6 +140,7 @@ async function interpret(text,cur_scope=1) {
                     if (Variables[match]['value'] === undefined) {
                         return
                     }
+                    //render element
                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
 
                 }
@@ -135,6 +150,7 @@ async function interpret(text,cur_scope=1) {
                     if (Variables[match]['value'] === undefined) {
                         return
                     }
+                    //render element
                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
 
                 } else {
@@ -144,16 +160,129 @@ async function interpret(text,cur_scope=1) {
             }
 
         }
+        else if (regex_of_function.test(line)) {
+
+        }
+        else {
+            // console.log(line)
+            let word = getWord(line, 0)
+            console.log(word)
+            if (word === undefined) {
+                debugger
+                if(line.trim()=='}'){
+                    let temp=Branch_stack[Branch_stack.length-1]
+                    if(temp['keyword']=='if' && temp['inner_scope']==scope){
+                        scope-=1
+                        i=temp['end']-1
+                        Branch_stack.pop()
+                    }
+                }
+            } else if (word['word'] == "if") {
+                console.log("if condition detected")
+                //get expression in if
+                if(/^\s*if\s*\(.*\)\s*\{\s*$/.test(line)){
+                    console.log("valid if")
+                }
+                let exp = line.slice(word['end']).split('{', 1)[0]
+                // console.log(exp)
+                let pass=evaluate(exp,scope)
+                console.log(pass)
+                let if_code=getContainer(i,Program[i].indexOf("{"))
+                console.log(if_code)
+                let if_ladder={"keyword":"if","else":undefined,"end":if_code["end"][0]+1,"inner_scope":scope+1}
+                if (Program[if_ladder["end"]].includes("else")){
+                    let j=if_ladder["end"]
+                    if_ladder["else"]=j
+                    while(Program[j].includes("else if")){
+                        let elif_code=getContainer(j,Program[j].indexOf("{"))
+                        j=elif_code["end"][0]+1
+                    }
+                    if(Program[j].includes("else")){
+                        let else_code=getContainer(j,Program[j].indexOf("{"))
+                        if_ladder["end"]=else_code["end"][0]+1
+                    }
+                }
+                Branch_stack.push(if_ladder)
+                if (pass['value']==0){ //did not enter if condition
+                    console.log("failed")
+                    if(if_ladder["else"]===undefined){
+                        i=if_ladder["end"]-1
+                        Branch_stack.pop()
+                    }
+                    else{
+                        i=if_ladder["else"]-1
+                    }
+                }
+                else{//entered if condition
+                    scope+=1
+                    console.log("passed")
+                }
+                
+            } else if (word['word'] == "else"){
+                let temp=Branch_stack[Branch_stack.length-1]
+                if (temp===undefined){
+                    CrashNotif({"error word":"No if condition detected"})
+                    return
+                }
+                
+                if (temp["keyword"]!="if"){
+                    CrashNotif({"error word":"No if condition detected"})
+                    return
+                }
+
+                if(temp["inner_scope"]==scope+1){
+                    if (Program[i].includes("if")){
+                        let code=getContainer(i,Program[i].indexOf("{"))
+                        temp['else']=undefined
+                        if (Program[code['end'][0]+1].includes("else")){
+                            temp['else']=code['end'][0]+1
+                        }
+                        let exp=Program[i].slice(Program[i].indexOf('('),code['start'][1])
+                        // console.log(exp)
+                        let pass=evaluate(exp,scope)
+                        console.log(pass)
+                        if (pass['value']==0){ //did not enter if condition
+                            console.log("failed")
+                            if(temp["else"]===undefined){
+                                i=temp["end"]-1
+                                Branch_stack.pop()
+                            }
+                            else{
+                                i=temp["else"]-1
+                            }
+                        }
+                        else{//entered if condition
+                            scope+=1
+                            console.log("passed")
+                        }
+                        
+                    }
+                    else{
+                        temp['else']=undefined
+                        scope+=1
+                    }
+                }
+                else{
+                    CrashNotif({"error word":"No if condition deteted"})
+                    return
+                }
+                
+            }
+            else{
+                debugger;
+            }
+        }
     }
-    // console.log(lines)
+    // console.log(Program)
 }
-function evaluate(expression) {
+function evaluate(expression, scope) {
     let result = undefined
     /*
         parse mode values
         0=Not Started reading value
         1=reading integer/float
         2=reading float
+        3=reading 2-character operators
         4=reading a character   //obsolete
         5=reading a string      //obsolete
         6=reading either a variable or function
@@ -170,30 +299,47 @@ function evaluate(expression) {
     let operation_stack = ['#']
     let F = function (s) {
         switch (s) {
+            case '||': return 2;
+            case '&&': return 4;
+            case '==':
+            case '!=': return 6;
+            case '>':
+            case '<':
+            case '>=':
+            case '<=': return 8;
             case '+':
-            case '-': return 2;
+            case '-': return 10;
             case '*':
             case '%':
-            case '/': return 4;
-            // case '$':
-            // case '^': return 5;
+            case '/': return 12;
+            case '!': return 14;
             case '#': return -1;
+            case '[':
             case '(': return 0;
-            default: return 8;
+            default: return 16;
         }
     }
     let G = function (s) {
         switch (s) {
+            case '||': return 1;
+            case '&&': return 3;
+            case '==':
+            case '!=': return 5;
+            case '>':
+            case '<':
+            case '>=':
+            case '<=': return 7;
             case '+':
-            case '-': return 1;
+            case '-': return 9;
             case '*':
             case '%':
-            case '/': return 3;
-            // case '$':
-            // case '^': return 6;
+            case '/': return 11;
+            case '!': return 13;
+            case ']':
             case ')': return 0;
-            case '(': return 9;
-            default: return 7;
+            case '[':
+            case '(': return 17;
+            default: return 15;
         }
     }
     let conv = function (elem) {
@@ -207,41 +353,150 @@ function evaluate(expression) {
                 case '+':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    // temp_res['value'] = TypeCastFloat(op1['value']) + TypeCastFloat(op2['value'])
-                    temp_res['value'] = TypeCastFloat(op1) + TypeCastFloat(op2)
+                    if (op1 === undefined) {
+                        temp_res['value'] = TypeCastFloat(op2)
+                    }
+                    else if (typeof (op1) == 'object') {
+                        temp_res['value'] = TypeCastFloat(op1) + TypeCastFloat(op2)
+                    } else {
+                        postfix_stack.push(op1)
+                        temp_res['value'] = TypeCastFloat(op2)
+                    }
                     postfix_stack.push(temp_res)
                     break
                 case '-':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    // temp_res['value'] = TypeCastFloat(op1['value']) - TypeCastFloat(op2['value'])
-                    temp_res['value'] = TypeCastFloat(op1) - TypeCastFloat(op2)
+                    if (op1 === undefined) {
+                        temp_res['value'] = - TypeCastFloat(op2)
+                    }
+                    else if (typeof (op1) == 'object') {
+                        temp_res['value'] = TypeCastFloat(op1) - TypeCastFloat(op2)
+                    } else {
+                        postfix_stack.push(op1)
+                        temp_res['value'] = - TypeCastFloat(op2)
+                    }
                     postfix_stack.push(temp_res)
                     break
                 case '*':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    // temp_res['value'] = TypeCastFloat(op1['value']) * TypeCastFloat(op2['value'])
                     temp_res['value'] = TypeCastFloat(op1) * TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
                 case '/':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    // temp_res['value'] = TypeCastFloat(op1['value']) / TypeCastFloat(op2['value'])
                     temp_res['value'] = TypeCastFloat(op1) / TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
                 case '%':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    // temp_res['value'] = TypeCastFloat(op1['value']) % TypeCastFloat(op2['value'])
                     temp_res['value'] = TypeCastFloat(op1) % TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
+                case '||':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != 0 || op2['value'] != 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '&&':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != 0 && op2['value'] != 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '==':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] == op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '!=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '>':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] > op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '<':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] < op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '>=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] >= op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '<=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] <= op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '!':
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] == 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
                 default:
                     postfix_stack.push(temp3)
-                    // console.log(postfix_stack)
+                // console.log(postfix_stack)
             }
         }
         if (F(operation_stack.slice(-1)[0]) != G(elem)) {
@@ -252,6 +507,7 @@ function evaluate(expression) {
         }
     }
     let exp_end = function () {
+        debugger
         while (operation_stack.length > 1) {
             let temp3 = operation_stack.pop()
             let op1 = undefined, op2 = undefined, temp_res = { 'value': 0, 'type': "float" }
@@ -259,33 +515,147 @@ function evaluate(expression) {
                 case '+':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    temp_res['value'] = op1['value'] + op2['value']
+                    if (op1 === undefined) {
+                        temp_res['value'] = TypeCastFloat(op2)
+                    }
+                    else if (typeof (op1) == 'object') {
+                        temp_res['value'] = TypeCastFloat(op1) + TypeCastFloat(op2)
+                    } else {
+                        postfix_stack.push(op1)
+                        temp_res['value'] = TypeCastFloat(op2)
+                    }
                     postfix_stack.push(temp_res)
                     break
                 case '-':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    temp_res['value'] = op1['value'] - op2['value']
+                    if (op1 === undefined) {
+                        temp_res['value'] = - TypeCastFloat(op2)
+                    }
+                    else if (typeof (op1) == 'object') {
+                        temp_res['value'] = TypeCastFloat(op1) - TypeCastFloat(op2)
+                    } else {
+                        postfix_stack.push(op1)
+                        temp_res['value'] = - TypeCastFloat(op2)
+                    }
                     postfix_stack.push(temp_res)
                     break
                 case '*':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    temp_res['value'] = op1['value'] * op2['value']
+                    temp_res['value'] = TypeCastFloat(op1) * TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
                 case '/':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    temp_res['value'] = op1['value'] / op2['value']
+                    temp_res['value'] = TypeCastFloat(op1) / TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
                 case '%':
                     op2 = postfix_stack.pop()
                     op1 = postfix_stack.pop()
-                    temp_res['value'] = op1['value'] % op2['value']
+                    temp_res['value'] = TypeCastFloat(op1) % TypeCastFloat(op2)
                     postfix_stack.push(temp_res)
                     break
+                case '||':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != 0 || op2['value'] != 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '&&':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != 0 && op2['value'] != 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '==':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] == op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '!=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] != op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '>':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] > op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '<':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] < op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '>=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] >= op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '<=':
+                    op2 = postfix_stack.pop()
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] <= op2['value']) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
+                case '!':
+                    op1 = postfix_stack.pop()
+                    if (op1['value'] == 0) {
+                        temp_res['value'] = 1
+                    }
+                    else {
+                        temp_res['value'] = 0
+                    }
+                    postfix_stack.push(temp_res)
+                    break;
                 default:
                     postfix_stack.push(temp3)
             }
@@ -294,8 +664,8 @@ function evaluate(expression) {
     }
     for (let i = 0; i <= expression.length; i++) {
         let c = expression[i]
-        if(i==expression.length){
-            c=" "
+        if (i == expression.length) {
+            c = " "
             // i--
         }
         debugger;
@@ -308,7 +678,7 @@ function evaluate(expression) {
                     else if (operator === undefined) {
                         operator = '-'
                         negativeFlag = false
-                        parse_mode=10
+                        parse_mode = 10
                     }
                     else {
                         negativeFlag = true
@@ -317,37 +687,72 @@ function evaluate(expression) {
                 else if (c == '+') {
                     if (operator === undefined) {
                         operator = '+'
-                        parse_mode=10
+                        parse_mode = 10
                         // negativeFlag = false
                     }
                 }
                 else if (c == '*') {
                     if (operator === undefined) {
                         operator = '*'
-                        parse_mode=10
+                        parse_mode = 10
                         // negativeFlag = false
                     }
                 }
                 else if (c == '/') {
                     if (operator === undefined) {
                         operator = '/'
-                        parse_mode=10
+                        parse_mode = 10
                         // negativeFlag = false
                     }
                 }
                 else if (c == '%') {
                     if (operator === undefined) {
                         operator = '%'
-                        parse_mode=10
-                        // negativeFlag = false
+                        parse_mode = 10
                     }
                 }
-                else if(c==')' || c=='('){
+                else if (c == '>') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == '<') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == '|') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == '&') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == '=') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == '!') {
+                    if (operator === undefined) {
+                        operator = c
+                        parse_mode = 3
+                    }
+                }
+                else if (c == ')' || c == '(') {
                     conv(c)
                 }
                 else if (/^[0-9]$/.test(c)) {
                     parse_mode = 1
-                    temp = c+""
+                    temp = c + ""
                     // if (negativeFlag) {
                     //     temp = -c
                     // }
@@ -390,8 +795,8 @@ function evaluate(expression) {
                 //         }
                 //     }
                 // }
-                
-                else if(/^[ \t]$/.test(c)){
+
+                else if (/^[ \t]$/.test(c)) {
                     continue
                 }
                 else {
@@ -400,31 +805,85 @@ function evaluate(expression) {
                 }
                 break;
             case 1:
-                if(/^[0-9]$/.test(c)){
-                    temp=temp+""+c
+                if (/^[0-9]$/.test(c)) {
+                    temp = temp + "" + c
                 }
-                else if(c=='.'){
-                    parse_mode=2
-                    temp=temp+"."
+                else if (c == '.') {
+                    parse_mode = 2
+                    temp = temp + "."
                 }
-                else{
+                else {
                     i--;
-                    temp={'value':Number(temp),'type':'float'}
-                    parse_mode=10
+                    temp = { 'value': Number(temp), 'type': 'float' }
+                    parse_mode = 10
                 }
                 break;
             case 2:
-                if(/^[0-9]$/.test(c)){
-                    temp=temp+""+c
+                if (/^[0-9]$/.test(c)) {
+                    temp = temp + "" + c
                 }
-                else{
+                else {
                     i--
-                    temp={'value':Number(temp),'type':'float'}
-                    parse_mode=10
+                    temp = { 'value': Number(temp), 'type': 'float' }
+                    parse_mode = 10
                 }
                 break;
-            case 3://obsolete
-                
+            case 3:// identify operator
+                if (operator == '>') {
+                    if (c == "=") {
+                        operator = '>='
+                    }
+                    else {
+                        i--;
+                    }
+                }
+                else if (operator == '<') {
+                    if (c == "=") {
+                        operator = '<='
+                    }
+                    else {
+                        i--;
+                    }
+                }
+                else if (operator == '|') {
+                    if (c == "|") {
+                        operator = '||'
+                    }
+                    else {
+                        CrashNotif({ 'error word': "Bit wise operations not supported" })
+                        i--;
+                        return
+                    }
+                }
+                else if (operator == '&') {
+                    if (c == "&") {
+                        operator = '&&'
+                    }
+                    else {
+                        CrashNotif({ 'error word': "Bit wise operations not supported" })
+                        i--;
+                        return
+                    }
+                }
+                else if (operator == '=') {
+                    if (c == "=") {
+                        operator = '=='
+                    }
+                    else {
+                        CrashNotif({ 'error word': "inline assignment not supported" })
+                        i--;
+                        return
+                    }
+                }
+                else if (operator == '!') {
+                    if (c == "=") {
+                        operator = '!='
+                    }
+                    else {
+                        i--;
+                    }
+                }
+                parse_mode = 10
                 break;
             case 4://obsolete
 
@@ -434,70 +893,77 @@ function evaluate(expression) {
                 break;
             case 6://variable or function
                 if (/^[_0-9a-zA-Z]$/.test(c)) {
-                    temp = temp+""+c
+                    temp = temp + "" + c
                     parse_mode = 6
                 }
-                else if(/^[ \t]$/.test(c)){
+                else if (/^[ \t]$/.test(c)) {
                     i--
-                    parse_mode=9
+                    parse_mode = 9
                     break;
                 }
-                else if(c=="("){
-                    parse_mode=8
+                else if (c == "(") {
+                    parse_mode = 8
                 }
-                else{
+                else {
                     i--
-                    parse_mode=7
+                    parse_mode = 7
                 }
                 break;
             case 7:// variable
-                for(let j=0;j<Variables.length;j++){
-                    if (temp==Variables[j]['name'] && scope==Variables[j]["scope"]){
-                        temp={"value":Variables[j]['value'],'type':Variables[j]['type']}
-                        
-                        break;
-                    }
-                }
-                if (temp['value']===undefined){
-                    CrashNotif({'error word':'Variable not Found'})
+            // version 1
+                // for (let j = 0; j < Variables.length; j++) {
+                //     if (temp == Variables[j]['name'] && scope == Variables[j]["scope"]) {
+                //         temp = { "value": Variables[j]['value'], 'type': Variables[j]['type'] }
+
+                //         break;
+                //     }
+                // }
+
+                //version 2
+                let match=getVariableIndex(temp,scope)
+                if(match===undefined) {
+                    CrashNotif({ 'error word': 'Variable not Found' })
                     return
                 }
+                else{
+                    temp = { "value": Variables[match]['value'], 'type': Variables[match]['type'] }
+                }
                 i--
-                parse_mode=10
+                parse_mode = 10
                 break;
             case 8:// function parameter
 
                 break;
             case 9://check if identifier is a function
-                if(/^[ \t]$/.test(c) && i!=expression.length){
+                if (/^[ \t]$/.test(c) && i != expression.length) {
                     break;
                 }
-                else if(c=="("){
-                    parse_mode=8
+                else if (c == "(") {
+                    parse_mode = 8
                 }
-                else{
+                else {
                     i--
-                    parse_mode=7
+                    parse_mode = 7
                 }
                 break;
             case 10:// finished reading
                 debugger;
                 console.log(temp)
-                if (operator===undefined && temp!==undefined){
-                    if (negativeFlag){
-                        temp['value']=-temp['value']
+                if (operator === undefined && temp !== undefined) {
+                    if (negativeFlag) {
+                        temp['value'] = -temp['value']
                     }
-                    negativeFlag=false
+                    negativeFlag = false
                     debugger;
                     conv(temp)
-                    temp=undefined
+                    temp = undefined
                 }
-                else if (temp===undefined){
+                else if (temp === undefined) {
                     conv(operator)
-                    operator=undefined
+                    operator = undefined
                 }
                 debugger
-                parse_mode=0;
+                parse_mode = 0;
                 i--;
                 break
             default:
@@ -506,43 +972,118 @@ function evaluate(expression) {
     }
     console.log(postfix_stack)
     exp_end()
-    result=postfix_stack[0]
+    result = postfix_stack[0]
     return result
 }
-function getWord(line,StartIndex){
-    let readmode=0
-    let Wordstart=StartIndex,Wordend=StartIndex
-    for(let i=StartIndex;i<line.length;i++){
-        if(readmode==0){
-            if(/^[ \t]$/.test(line[i])){
+function getWord(line, StartIndex) {
+    let readmode = 0
+    let Wordstart = StartIndex, Wordend = StartIndex
+    for (let i = StartIndex; i < line.length; i++) {
+        if (readmode == 0) {
+            if (/^[ \t]$/.test(line[i])) {
                 Wordstart++
                 continue
             }
-            else if(/^[a-zA-Z_]$/.test(line[i])){
-                readmode=1
+            else if (/^[a-zA-Z_]$/.test(line[i])) {
+                readmode = 1
             }
         }
-        else if(readmode==1){
-            if(/^[0-9a-zA-Z_]$/.test(line[i])){
-                Wordend=i
+        else if (readmode == 1) {
+            if (/^[0-9a-zA-Z_]$/.test(line[i])) {
+                Wordend = i
             }
-            else{
-                readmode=2
-                Wordend=i
+            else {
+                readmode = 2
+                Wordend = i
                 break;
             }
         }
     }
-    if (readmode==2){
-        return line.slice(Wordstart,Wordend)
+    if (readmode == 2) {
+        return { "word": line.slice(Wordstart, Wordend), "end": Wordend }
     }
-    else if(readmode==1){
+    else if (readmode == 1) {
         Wordend++
-        return line.slice(Wordstart,Wordend)
+        return { "word": line.slice(Wordstart, Wordend), "end": Wordend }
     }
-    else{
+    else {
         return undefined
     }
+}
+function getContainer(StartLine, StartIndex) {
+    let brackets_stack = []
+    let in_string = false
+    let line = Program[StartLine]
+    for (let j = StartIndex; j < line.length; j++) {
+        if (line[j] === '{') {
+            if (!in_string) {
+                brackets_stack.push([StartLine, j])
+            }
+        }
+        else if (line[j] === '}') {
+            if (!in_string) {
+                if (brackets_stack.length == 1) {
+                    return { 'start': brackets_stack[0], 'end': [StartLine, j] }
+                }
+                brackets_stack.pop()
+            }
+        }
+        else if (/^\S$/.test(line[j])) {
+            if (brackets_stack.length == 0) {
+                return undefined
+            }
+            else if (in_string === true && line[j] == "\\") {
+                j++
+            }
+            else if (line[j] == '"') {
+                in_string = !in_string
+            }
+        }
+    }
+    for (let i = StartLine + 1; i < Program.length; i++) {
+        let line = Program[i]
+        for (let j = 0; j < line.length; j++) {
+            if (line[j] === '{') {
+                if (!in_string) {
+                    brackets_stack.push([i, j])
+                }
+            }
+            else if (line[j] === '}') {
+                if (!in_string) {
+                    if (brackets_stack.length == 1) {
+                        return { 'start': brackets_stack[0], 'end': [i, j] }
+                    }
+                    brackets_stack.pop()
+                }
+            }
+            else if (in_string === true && line[j] == "\\") {
+                j++
+            }
+            else if (line[j] == '"') {
+                in_string = !in_string
+            }
+        }
+    }
+
+    // not yet implemented
+
+}
+function getVariableIndex(VariableName,scope){
+    let function_scope=0
+    for(let j=0;j<Branch_stack.length;j++){
+        if (Branch_stack[j]['keyword']=="function"){
+            function_scope=Branch_stack[j]['scope']
+        }
+    }
+    for (let j = 0; j < Variables.length; j++) {
+        if (Variables[j]['name'] == VariableName )//scope 0=malloced values
+        {
+            if((Variables[j]['scope'] <= scope && Variables[j]['scope'] >=function_scope )|| Variables[j]['scope'] == 0){
+                return j
+            }
+        }
+    }
+    return undefined
 }
 function CrashNotif(extra_detail) {
     console.log("crashed")
@@ -603,18 +1144,41 @@ function compile() {
     for (let i = nodes.length - 1; i >= 0; i--) {
         nodes[i].parentElement.removeChild(nodes[i])
     }
-    Variables = []
     let Cin = document.getElementById("Cin")
     let val = Cin.value
+    Variables=[]
+    Branch_stack = [{"keyword":"function","scope":1}]
+    functions={}
     // console.log(val)
     // main_function_outline=/^int main\(\){\n.*\treturn 0;\n}$/
     // main_function_outline=/^int main\(\){(.|\n)*\treturn 0;\n}$/
     // main_function_outline=/(int|(.|\n)*\nint) main\(\){(.|\n)*\treturn 0;\n}$/
     main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\treturn 0;\n}$/
     if (main_function_outline.test(val)) {
-        Cin_text = val
-        // console.log(check_syntax(val))
-        interpret(val)
+        if (check_syntax(val)) {
+            Cin_text = val
+            Program = val.split("\n")
+            let datatypeExp = "((" + DataTypes[0] + ")"
+            for (let i = 1; i < DataTypes.length; i++) {
+                datatypeExp += "|(" + DataTypes[i] + ")"
+            }
+            datatypeExp += ")"
+            const variableExp = "[a-zA-Z_][a-zA-Z0-9_]*"
+            regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
+
+            let function_start_pointer = 0
+            for (let i = 0; i < Program.length; i++) {
+                let line = Program[i].trim()
+                if (line === "int main(){") {
+                    function_start_pointer = i + 1
+                    break
+                }
+                else if (regex_of_function.test(line)) {
+
+                }
+            }
+            interpret(function_start_pointer, 1)
+        }
     }
     else {
         Cin.value = Cin_text
@@ -623,7 +1187,7 @@ function compile() {
     // output.innerHTML=val
 }
 function check_syntax(text) { // balanced bracket checks only
-    brackets_stack = []
+    let brackets_stack = []
     for (let i = 0; i < text.length; i++) {
         if (text[i] == "{" || text[i] == "(" || text[i] == '[') {
             brackets_stack.push(text[i])
@@ -697,11 +1261,12 @@ const TreeNode_Struct = ""
 var functions = {}
 var Cin_text = "int main(){\n\treturn 0;\n}"
 var Variables = []
-var call_stack = []
+var Branch_stack = [{"keyword":"function","scope":1}]
 var DataTypes = ["int", "float", "char"]
-var scope=0
+var Program = []
+// var scope=0
 const NULL = 0
-var sleepTime=3000
+var sleepTime = 1000
 function handleKey(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
@@ -727,9 +1292,9 @@ function handleKey(e) {
         }
     }, 0)
 }
-const sleep = function(ms){
-    if (ms===undefined){
-        ms=sleepTime
+const sleep = function (ms) {
+    if (ms === undefined) {
+        ms = sleepTime
     }
     return new Promise(r => setTimeout(r, ms));
 }
