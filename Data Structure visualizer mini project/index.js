@@ -10,9 +10,9 @@ async function interpret(function_start_pointer, scope = 1) {
     // variableExp="v"
 
     regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
-    regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "(=[\\S\\s]+)?;")
-    const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+;")
-    const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)?;")
+    regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "( *=[\\S\\s]+)? *;")
+    const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+ *;")
+    const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)? *;")
     // let function_start_pointer = 0
     // for (let i = 0; i < Program.length; i++) {
     //     let line = Program[i].trim()
@@ -37,7 +37,7 @@ async function interpret(function_start_pointer, scope = 1) {
                 let var_name = var_names[j].split("=")[0].trim()
                 let var_data = 0
                 if (var_names[j].split("=")[1]) {
-                    var_data = var_names[j].split("=")[1]
+                    var_data = var_names[j].split("=")[1].trim()
                     if (type_data[0] == "int") {
                         if (var_data.match(/^(-)?[0-9]+$/)) {
                             var_data = parseInt(var_data)
@@ -87,9 +87,9 @@ async function interpret(function_start_pointer, scope = 1) {
                 //         //crashed
                 //     }
                 // }
-                
+
                 // version 2
-                if(getVariableIndex(var_name,scope)!==undefined){
+                if (getVariableIndex(var_name, scope) !== undefined) {
                     CrashNotif({ "error word": "Variable of same name already exists" })
                     return
                     //crashed
@@ -111,7 +111,7 @@ async function interpret(function_start_pointer, scope = 1) {
             //         break
             //     }
             // }
-            let match=getVariableIndex(var_name,scope)
+            let match = getVariableIndex(var_name, scope)
             if (match === undefined) {
                 CrashNotif({ "error word": "No such Variable" })
                 return;
@@ -169,106 +169,255 @@ async function interpret(function_start_pointer, scope = 1) {
             console.log(word)
             if (word === undefined) {
                 debugger
-                if(line.trim()=='}'){
-                    let temp=Branch_stack[Branch_stack.length-1]
-                    if(temp['keyword']=='if' && temp['inner_scope']==scope){
-                        scope-=1
-                        i=temp['end']-1
+                if (line.trim() == '}') {
+                    let temp = Branch_stack[Branch_stack.length - 1]
+                    if (temp['keyword'] == 'if' && temp['inner_scope'] == scope) {
+                        scope -= 1
+                        i = temp['end'] - 1
                         Branch_stack.pop()
+                        deallocateOutOfScopeVariables(scope)
+                    }
+                    else if (temp['keyword'] == 'for' && temp['inner_scope'] == scope) {
+                        deallocateOutOfScopeVariables(scope - 1)
+                        if (regex_assign.test(temp['update_exp'] + ";")) {
+                            let var_name = temp['update_exp'].split("=")[0]
+                            let temp2 = evaluate(temp['update_exp'].slice(var_name.length + 1), scope + 1)
+                            let match = getVariableIndex(var_name, scope - 1)
+
+                            let type_data = Variables[match]['type']
+                            if (type_data == temp2['type']) {
+                                Variables[match]['value'] = temp2['value']
+                                //render element
+                                Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+                            }
+                            else if (type_data == "int") {
+                                Variables[match]['value'] = TypeCastInt(temp2)
+                                if (Variables[match]['value'] === undefined) {
+                                    return
+                                }
+                                //render element
+                                Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+                            }
+                            else if (type_data == "float") {
+                                Variables[match]['value'] = TypeCastFloat(temp2)
+                                if (Variables[match]['value'] === undefined) {
+                                    return
+                                }
+                                //render element
+                                Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+
+                            }
+                            else if (type_data == "char") {
+                                Variables[match]['value'] = TypeCastChar(temp2)
+                                if (Variables[match]['value'] === undefined) {
+                                    return
+                                }
+                                //render element
+                                Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+
+                            } else {
+                                CrashNotif({ "error word": "Type mismatch" })
+                                return undefined
+                            }
+
+                        }
+                        if (temp['test_exp'].trim() != "" && evaluate(temp['test_exp'], scope - 1)['value'] == 0) {
+                            Branch_stack.pop()
+                            scope -= 2
+                            deallocateOutOfScopeVariables(scope)
+                            i = temp['end'] - 1
+                        }
+                        else {
+                            i = temp['start'] - 1
+                        }
                     }
                 }
             } else if (word['word'] == "if") {
                 console.log("if condition detected")
                 //get expression in if
-                if(/^\s*if\s*\(.*\)\s*\{\s*$/.test(line)){
+                if (/^\s*if\s*\(.*\)\s*\{\s*$/.test(line)) {
                     console.log("valid if")
                 }
                 let exp = line.slice(word['end']).split('{', 1)[0]
                 // console.log(exp)
-                let pass=evaluate(exp,scope)
+                let pass = evaluate(exp, scope)
                 console.log(pass)
-                let if_code=getContainer(i,Program[i].indexOf("{"))
+                let if_code = getContainer(i, Program[i].indexOf("{"))
                 console.log(if_code)
-                let if_ladder={"keyword":"if","else":undefined,"end":if_code["end"][0]+1,"inner_scope":scope+1}
-                if (Program[if_ladder["end"]].includes("else")){
-                    let j=if_ladder["end"]
-                    if_ladder["else"]=j
-                    while(Program[j].includes("else if")){
-                        let elif_code=getContainer(j,Program[j].indexOf("{"))
-                        j=elif_code["end"][0]+1
+                let If_data = { "keyword": "if", "else": undefined, "end": if_code["end"][0] + 1, "inner_scope": scope + 1 }
+                if (Program[If_data["end"]].includes("else")) {
+                    let j = If_data["end"]
+                    If_data["else"] = j
+                    while (Program[j].includes("else if")) {
+                        let elif_code = getContainer(j, Program[j].indexOf("{"))
+                        j = elif_code["end"][0] + 1
                     }
-                    if(Program[j].includes("else")){
-                        let else_code=getContainer(j,Program[j].indexOf("{"))
-                        if_ladder["end"]=else_code["end"][0]+1
+                    if (Program[j].includes("else")) {
+                        let else_code = getContainer(j, Program[j].indexOf("{"))
+                        If_data["end"] = else_code["end"][0] + 1
                     }
                 }
-                Branch_stack.push(if_ladder)
-                if (pass['value']==0){ //did not enter if condition
+                Branch_stack.push(If_data)
+                if (pass['value'] == 0) { //did not enter if condition
                     console.log("failed")
-                    if(if_ladder["else"]===undefined){
-                        i=if_ladder["end"]-1
+                    if (If_data["else"] === undefined) {
+                        i = If_data["end"] - 1
                         Branch_stack.pop()
                     }
-                    else{
-                        i=if_ladder["else"]-1
+                    else {
+                        i = If_data["else"] - 1
                     }
                 }
-                else{//entered if condition
-                    scope+=1
+                else {//entered if condition
+                    scope += 1
                     console.log("passed")
                 }
-                
-            } else if (word['word'] == "else"){
-                let temp=Branch_stack[Branch_stack.length-1]
-                if (temp===undefined){
-                    CrashNotif({"error word":"No if condition detected"})
-                    return
-                }
-                
-                if (temp["keyword"]!="if"){
-                    CrashNotif({"error word":"No if condition detected"})
+
+            } else if (word['word'] == "else") {
+                let temp = Branch_stack[Branch_stack.length - 1]
+                if (temp === undefined) {
+                    CrashNotif({ "error word": "No if condition detected" })
                     return
                 }
 
-                if(temp["inner_scope"]==scope+1){
-                    if (Program[i].includes("if")){
-                        let code=getContainer(i,Program[i].indexOf("{"))
-                        temp['else']=undefined
-                        if (Program[code['end'][0]+1].includes("else")){
-                            temp['else']=code['end'][0]+1
-                        }
-                        let exp=Program[i].slice(Program[i].indexOf('('),code['start'][1])
-                        // console.log(exp)
-                        let pass=evaluate(exp,scope)
-                        console.log(pass)
-                        if (pass['value']==0){ //did not enter if condition
-                            console.log("failed")
-                            if(temp["else"]===undefined){
-                                i=temp["end"]-1
-                                Branch_stack.pop()
-                            }
-                            else{
-                                i=temp["else"]-1
-                            }
-                        }
-                        else{//entered if condition
-                            scope+=1
-                            console.log("passed")
-                        }
-                        
-                    }
-                    else{
-                        temp['else']=undefined
-                        scope+=1
-                    }
-                }
-                else{
-                    CrashNotif({"error word":"No if condition deteted"})
+                if (temp["keyword"] != "if") {
+                    CrashNotif({ "error word": "No if condition detected" })
                     return
                 }
-                
+
+                if (temp["inner_scope"] == scope + 1) {
+                    if (Program[i].includes("if")) {
+                        let code = getContainer(i, Program[i].indexOf("{"))
+                        temp['else'] = undefined
+                        if (Program[code['end'][0] + 1].includes("else")) {
+                            temp['else'] = code['end'][0] + 1
+                        }
+                        let exp = Program[i].slice(Program[i].indexOf('('), code['start'][1])
+                        // console.log(exp)
+                        let pass = evaluate(exp, scope)
+                        console.log(pass)
+                        if (pass['value'] == 0) { //did not enter if condition
+                            console.log("failed")
+                            if (temp["else"] === undefined) {
+                                i = temp["end"] - 1
+                                Branch_stack.pop()
+                            }
+                            else {
+                                i = temp["else"] - 1
+                            }
+                        }
+                        else {//entered if condition
+                            scope += 1
+                            console.log("passed")
+                        }
+
+                    }
+                    else {
+                        temp['else'] = undefined
+                        scope += 1
+                    }
+                }
+                else {
+                    CrashNotif({ "error word": "No if condition deteted" })
+                    return
+                }
+
             }
-            else{
+            else if (word['word'] == "for") {
+                if (/^\s*for\s*\(.*;.*;.*\)\s*\{\s*$/.test(line)) {
+                    let init_exp = line.slice(line.indexOf('(') + 1, line.indexOf(';'))
+                    let test_exp = line.slice(line.indexOf(';') + 1, line.lastIndexOf(';'))
+                    let update_exp = line.slice(line.lastIndexOf(';') + 1, line.lastIndexOf(')'))
+                    let for_code = getContainer(i, Program[i].indexOf('{'))
+                    if (for_code == undefined) {
+                        CrashNotif({ "error word": "For loop syntax error" })
+                        return
+                    }
+                    let for_data = { "keyword": "for", "start": i + 1, "end": for_code['end'][0] + 1, "test_exp": test_exp, "update_exp": update_exp, "inner_scope": scope + 2 }
+                    Branch_stack.push(for_data)
+                    if (regex_var_decl.test(init_exp + ";")) {
+                        let temp = getWord(init_exp, 0)
+                        let var_type = temp['word']
+                        let declarations = init_exp.slice(temp['end']).split(",")
+                        for (let j = 0; j < declarations.length; j++) {
+                            let var_name = getWord(declarations[j], 0)['word']
+                            let var_data = evaluate(declarations[j].slice(declarations[j].split('=')[0].length + 1), scope + 1)
+                            if (var_type == "int") {
+                                var_data = TypeCastInt(var_data)
+                                Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
+                            }
+                            else if (var_type == "float") {
+                                var_data = TypeCastFloat(var_data)
+                                Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
+                            }
+                            else if (var_type == 'char') {
+                                var_data = TypeCastChar(var_data)
+                                Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
+                            }
+                        }
+                    }
+                    else {//not declaring
+                        let var_name = init_exp.split("=")[0]
+                        let temp = evaluate(init_exp.slice(var_name.length + 1), scope + 1)
+                        let match = getVariableIndex(var_name, scope + 1)
+
+                        let type_data = Variables[match]['type']
+                        if (type_data == temp['type']) {
+                            Variables[match]['value'] = temp['value']
+                            //render element
+                            Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+                        }
+                        else if (type_data == "int") {
+                            // Variables[match]['value'] = TypeCastInt(temp['value'])
+                            Variables[match]['value'] = TypeCastInt(temp)
+                            if (Variables[match]['value'] === undefined) {
+                                return
+                            }
+                            //render element
+                            Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+                        }
+                        else if (type_data == "float") {
+                            // Variables[match]['value'] = TypeCastFloat(temp['value'])
+                            Variables[match]['value'] = TypeCastFloat(temp)
+                            if (Variables[match]['value'] === undefined) {
+                                return
+                            }
+                            //render element
+                            Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+
+                        }
+                        else if (type_data == "char") {
+                            // Variables[match]['value'] = TypeCastChar(temp['value'])
+                            Variables[match]['value'] = TypeCastChar(temp)
+                            if (Variables[match]['value'] === undefined) {
+                                return
+                            }
+                            //render element
+                            Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
+
+                        } else {
+                            CrashNotif({ "error word": "Type mismatch" })
+                            return undefined
+                        }
+
+                    }
+                    if (test_exp.trim() != "" && evaluate(test_exp, scope + 1)['value'] == 0) {
+                        //exit before start
+                        Branch_stack.pop()
+                        deallocateOutOfScopeVariables(scope)
+                        i = for_code['end'][0]
+                    }
+                    else {
+                        //enter loop
+                        scope += 2
+                    }
+                }
+                else {
+                    CrashNotif({ 'error word': "for loop syntax is wrong" })
+                    return
+                }
+            }
+            else {
                 debugger;
             }
         }
@@ -313,10 +462,11 @@ function evaluate(expression, scope) {
             case '%':
             case '/': return 12;
             case '!': return 14;
+            case 'int': return 16;
             case '#': return -1;
             case '[':
             case '(': return 0;
-            default: return 16;
+            default: return 18;
         }
     }
     let G = function (s) {
@@ -335,11 +485,12 @@ function evaluate(expression, scope) {
             case '%':
             case '/': return 11;
             case '!': return 13;
+            case 'int':return 15;
             case ']':
             case ')': return 0;
             case '[':
-            case '(': return 17;
-            default: return 15;
+            case '(': return 19;
+            default: return 17;
         }
     }
     let conv = function (elem) {
@@ -492,6 +643,11 @@ function evaluate(expression, scope) {
                     else {
                         temp_res['value'] = 0
                     }
+                    postfix_stack.push(temp_res)
+                    break;
+                case 'int':
+                    op1 = postfix_stack.pop()
+                    temp_res['value'] = TypeCastInt(op1)
                     postfix_stack.push(temp_res)
                     break;
                 default:
@@ -654,6 +810,11 @@ function evaluate(expression, scope) {
                     else {
                         temp_res['value'] = 0
                     }
+                    postfix_stack.push(temp_res)
+                    break;
+                case 'int':
+                    op1 = postfix_stack.pop()
+                    temp_res['value'] = TypeCastInt(op1)
                     postfix_stack.push(temp_res)
                     break;
                 default:
@@ -910,7 +1071,7 @@ function evaluate(expression, scope) {
                 }
                 break;
             case 7:// variable
-            // version 1
+                // version 1
                 // for (let j = 0; j < Variables.length; j++) {
                 //     if (temp == Variables[j]['name'] && scope == Variables[j]["scope"]) {
                 //         temp = { "value": Variables[j]['value'], 'type': Variables[j]['type'] }
@@ -920,14 +1081,23 @@ function evaluate(expression, scope) {
                 // }
 
                 //version 2
-                let match=getVariableIndex(temp,scope)
-                if(match===undefined) {
-                    CrashNotif({ 'error word': 'Variable not Found' })
-                    return
+                if (temp != "int") {
+                    let match = getVariableIndex(temp, scope)
+                    if (match === undefined) {
+                        CrashNotif({ 'error word': 'Variable not Found' })
+                        return
+                    }
+                    else {
+                        temp = { "value": Variables[match]['value'], 'type': Variables[match]['type'] }
+                    }
+                } else {
+                    while (expression[i] != ')') {
+                        i++;
+                    }
+                    i++
+                    operation_stack.pop()
                 }
-                else{
-                    temp = { "value": Variables[match]['value'], 'type': Variables[match]['type'] }
-                }
+
                 i--
                 parse_mode = 10
                 break;
@@ -1068,22 +1238,34 @@ function getContainer(StartLine, StartIndex) {
     // not yet implemented
 
 }
-function getVariableIndex(VariableName,scope){
-    let function_scope=0
-    for(let j=0;j<Branch_stack.length;j++){
-        if (Branch_stack[j]['keyword']=="function"){
-            function_scope=Branch_stack[j]['scope']
+function getVariableIndex(VariableName, scope) {
+    let function_scope = 0
+    for (let j = 0; j < Branch_stack.length; j++) {
+        if (Branch_stack[j]['keyword'] == "function") {
+            function_scope = Branch_stack[j]['scope']
         }
     }
-    for (let j = 0; j < Variables.length; j++) {
-        if (Variables[j]['name'] == VariableName )//scope 0=malloced values
+    VariableName = VariableName.trim()
+    for (let j = Variables.length - 1; j >= 0; j--) {
+        if (Variables[j]['name'] == VariableName)//scope 0=malloced values
         {
-            if((Variables[j]['scope'] <= scope && Variables[j]['scope'] >=function_scope )|| Variables[j]['scope'] == 0){
+            if ((Variables[j]['scope'] <= scope && Variables[j]['scope'] >= function_scope) || Variables[j]['scope'] == 0) {
                 return j
             }
         }
     }
     return undefined
+}
+function deallocateOutOfScopeVariables(current_scope) {
+    for (let i = Variables.length - 1; i >= 0; i--) {
+        if (Variables[i]['scope'] > current_scope) {
+            removeVariable(Variables[i])
+            Variables.pop()
+        }
+    }
+}
+function removeVariable(variable) {
+    variable['div'].remove()
 }
 function CrashNotif(extra_detail) {
     console.log("crashed")
@@ -1146,9 +1328,9 @@ function compile() {
     }
     let Cin = document.getElementById("Cin")
     let val = Cin.value
-    Variables=[]
-    Branch_stack = [{"keyword":"function","scope":1}]
-    functions={}
+    Variables = []
+    Branch_stack = [{ "keyword": "function", "scope": 1 }]
+    functions = {}
     // console.log(val)
     // main_function_outline=/^int main\(\){\n.*\treturn 0;\n}$/
     // main_function_outline=/^int main\(\){(.|\n)*\treturn 0;\n}$/
@@ -1261,7 +1443,7 @@ const TreeNode_Struct = ""
 var functions = {}
 var Cin_text = "int main(){\n\treturn 0;\n}"
 var Variables = []
-var Branch_stack = [{"keyword":"function","scope":1}]
+var Branch_stack = [{ "keyword": "function", "scope": 1 }]
 var DataTypes = ["int", "float", "char"]
 var Program = []
 // var scope=0
