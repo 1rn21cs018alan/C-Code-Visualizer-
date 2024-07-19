@@ -32,6 +32,7 @@ function setCell(outerNode,InnerNode,rowIndex,colIndex){
 function makeOuterRepresentNode(){
     const outerNode=document.createElement('div');
     outerNode.classList.add("outer-Represent");
+    outerNode.innerHTML="<table></table>";
     return outerNode;
 }
 
