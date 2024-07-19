@@ -1,5 +1,33 @@
 const representDiv=document.getElementsByClassName("Represent")[0];
 const memoryDiv=document.getElementsByClassName("Memory")[0];
+function maketable(outerNode,rows,columns){
+     outerNode.innerHTML="";
+     var table=document.createElement("table");
+     outerNode.appendChild(table);
+     for(var i=0;i<rows;i++){
+        const row=table.insertRow();
+        for(var j=0;j<columns;j++){
+            var cell=row.insertCell();
+
+            //cell.appendChild(innerNode);
+        }
+     }
+     return outerNode;
+
+}
+
+function setCell(outerNode,InnerNode,rowIndex,colIndex){
+    const table=outerNode.querySelector("table");
+    const row=table.rows[rowIndex];
+    if(row){
+        var cell=row.cells[colIndex];
+        if(cell){
+            cell.appendChild(InnerNode);
+            return cell;
+        }
+    }
+     return null;
+}
 
 function makeOuterRepresentNode(){
     const outerNode=document.createElement('div');
