@@ -35,13 +35,13 @@
       <div class="container">
 
         <div class="Represent" name="Represent">
-          <div class="outer-Represent" style="top: 145px;left:285px;">
+          <div class="outer-Represent" id="node1" style="top: 145px;left:285px;">
             <div class="inner-box" id="one"></div>
             <!-- <hr class="center" id="line-1"></hr> -->
             <div class="inner-box" id="two"></div>
 
           </div>
-          <div class="outer-Represent" style="top:20px;left:20px;">
+          <div class="outer-Represent" id="node2" style="top:20px;left:20px;">
             <div class="inner-box" id="five"></div>
             <!-- <hr class="center" id="line-1"></hr> -->
             <div class="inner-box" id="six"></div>
@@ -68,6 +68,9 @@
   
         </div>
       </div>
+      <!-- Add the SVG element for the arrow -->
+      <svg id="arrow-svg" width="100%" height="100%" style="position:absolute; top:0; left:0; z-index:0;"></svg>
+    </div>
       <script src="DataStructureVis.js"></script>
 </body>
 </html>
