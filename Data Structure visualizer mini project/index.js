@@ -3000,7 +3000,7 @@ function getStaticMemory(type, scope) {
 }
 function calloc(elem_num, elem_size) {
     let mem_loc = malloc(elem_size * elem_num)
-    Memory[mem_loc]['size'] = elem_size
+    Memory[mem_loc]['size'] = elem_size * elem_num
     for (let i = 0; i < elem_num; i++) {
         Memory[mem_loc]['value'][i] = 0
     }
@@ -3067,6 +3067,7 @@ function render_Variables() {
         }
         // for the local variables
         let col_num = 0, row_num = 0, scope = 1
+        let arrows = []
         insertRow();
         let safe_mem_access = function (mem_loc) {
             if (mem_loc in Memory) {
@@ -3137,7 +3138,7 @@ function render_Variables() {
             let stk_arr = safe_mem_access(getMemoryData(variable['addr']));
             let stk_size = safe_mem_access(variable['addr'] + 8);
             let stk_top = safe_mem_access(variable['addr'] + 12);
-            let first_cell=undefined
+            let cells = []
             //code to detect no of rows for stack
             let table_rows = 2
             if (stk_arr !== NULL) {
@@ -3147,19 +3148,20 @@ function render_Variables() {
             for (let i = 0; i < table_rows - 1; i++) {
                 let elem_addr = getMemoryData(variable['addr']) + size_of('int') * i
                 let innerNode = makeValidInnerRepresentNode(safe_mem_access(elem_addr))
-                if(first_cell === undefined) {
-                    first_cell=innerNode;
-                }
+                cells.push(innerNode);
                 setCell(varNode, innerNode, table_rows - 2 - i, 0)
             }
-            let connects=[]
+            let connects = []
             let innerNode = makeValidInnerRepresentNode(safe_mem_access(variable['addr']))
             setCell(varNode, innerNode, table_rows - 1, 0)
-            if(first_cell !== undefined) {
-                connects=[[innerNode,first_cell,4,3]]
+            if (cells.length !== 0) {
+                connects = [[innerNode, cells[0], 4, 3]]
             }
             innerNode = makeValidInnerRepresentNode(stk_top)
             setCell(varNode, innerNode, table_rows - 1, 1)
+            if (stk_top >= 0 && cells.length !== 0 && cells.length > stk_top) {
+                connects.push([innerNode, cells[stk_top],1,2,[[0,1]]])
+            }
             innerNode = makeValidInnerRepresentNode(stk_size)
             setCell(varNode, innerNode, table_rows - 1, 2)
             if (variable['name'] !== undefined) {
@@ -3172,7 +3174,7 @@ function render_Variables() {
                 innerNode.textContent = variable['addr']
                 setCell(varNode, innerNode, table_rows, 0)
             }
-            return [varNode, table_rows, table_cols,connects]
+            return [varNode, table_rows, table_cols, connects]
         }
         let render_queue = function (variable) {
 
@@ -3193,7 +3195,7 @@ function render_Variables() {
             let elem_type = variable['type']['dtype']
             let extra_rows = 0
             let extra_cols = 0
-            let connects=[]
+            let connects = []
             // console.log(elem_type,table_cols,table_rows,variable)
             if (elem_type.indexOf('struct') != -1) {
                 table_rows = table_cols * table_rows
@@ -3249,7 +3251,7 @@ function render_Variables() {
                 innerNode.textContent = variable['addr']
                 setCell(varNode, innerNode, table_rows, 0)
             }
-            return [varNode, table_rows + extra_rows, table_cols + extra_cols,connects]
+            return [varNode, table_rows + extra_rows, table_cols + extra_cols, connects]
         }
         let render_primitive = function (variable) {
             let varNode = makeOuterRepresentNode()
@@ -3309,9 +3311,10 @@ function render_Variables() {
                     insertRow();
                 }
                 col_num = 0;
-                for(let j=0 ; j < varNodeDetails[3].length; j++){
-                    drawArrow(...varNodeDetails[3][j])
-                }
+                arrows.push(...varNodeDetails[3]);
+                // for(let j=0 ; j < varNodeDetails[3].length; j++){
+                //     drawArrow(...varNodeDetails[3][j])
+                // }
             }
             else if (temp['type'].indexOf('**') != -1) {
 
@@ -3333,6 +3336,7 @@ function render_Variables() {
                     insertRow();
                 }
                 col_num = 0;
+                arrows.push(...varNodeDetails[3]);
             }
             else if (temp['type'] == "struct queue") {
             }
@@ -3342,6 +3346,9 @@ function render_Variables() {
             }
             else if (temp['type'] == "struct tree") {
             }
+        }
+        for (let j = 0; j < arrows.length; j++) {
+            drawArrow(...arrows[j])
         }
         //for the global variables
     }
@@ -3523,9 +3530,10 @@ function syntaxCorrection() {
 }
 
 
-function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0) {
+function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0, extra_joints = []) {
     /*
     edge: 0=left, 1=top, 2=right, 3=bottom, 4= center
+    extra joints contain the % based coordinates of other points to connect to
     */
     const fromRect = fromElement.getBoundingClientRect();
     const toRect = toElement.getBoundingClientRect();
@@ -3578,17 +3586,38 @@ function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0) {
     // const endX = toRect.left - representDivRect.left;
     // const endY = toRect.top - representDivRect.top + toRect.height / 2;
     svgElement.style.height = representDiv.scrollHeight;
-    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    arrow.setAttribute("x1", startX);
-    arrow.setAttribute("y1", startY);
-    arrow.setAttribute("x2", endX);
-    arrow.setAttribute("y2", endY);
-    arrow.setAttribute("stroke", "black");
-    arrow.setAttribute("stroke-width", "2");
-    arrow.setAttribute("marker-end", "url(#arrowhead)");
-    arrow.style.zIndex = 4;
+    let draw_line = function (start_X, start_Y, end_X, end_Y) {
+        const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        arrow.setAttribute("x1", start_X);
+        arrow.setAttribute("y1", start_Y);
+        arrow.setAttribute("x2", end_X);
+        arrow.setAttribute("y2", end_Y);
+        arrow.setAttribute("stroke", "black");
+        arrow.setAttribute("stroke-width", "2");
+        arrow.style.zIndex = 4;
+        svgElement.appendChild(arrow);
+        return arrow;
+    }
+    let calc_joint_coordinates = function (joint) {
+        let X1 = startX, X2 = endX, X;
+        let Y1 = startY, Y2 = endY, Y;
+        X = X1 + (X2 - X1) * joint[0];
+        Y = Y1 + (Y2 - Y1) * joint[1];
+        return [X, Y]
+    }
+    if (extra_joints.length === 0) {
+        let arrow = draw_line(startX, startY, endX, endY);
+        arrow.setAttribute("marker-end", "url(#arrowhead)");
+    }
+    else {
+        draw_line(startX, startY, ...calc_joint_coordinates(extra_joints[0]));
+        let arrow = draw_line(...calc_joint_coordinates(_top(extra_joints)), endX, endY);
+        arrow.setAttribute("marker-end", "url(#arrowhead)");
+        for (let i = 0; i < extra_joints.length - 1; i++) {
+            draw_line(...calc_joint_coordinates(extra_joints[i]), ...calc_joint_coordinates(extra_joints[i + 1]));
+        }
+    }
 
-    svgElement.appendChild(arrow);
 }
 
 const stacks_struct = "\nstruct stack{\n\tint * arr;\n\tint size,top;\n};\ntypedef struct stack * STACK;\n\nSTACK getStack(int size){\n\tSTACK x;\n\tx=(STACK)malloc(sizeof(struct stack));\n\tif(x==NULL){\n\t\t// Memory error\n\t\texit(0);\n\t}\n\tx->top=-1;\n\tx->size=size;\n\tx->arr=(int *)malloc(sizeof(int)*size);\n\treturn x;\n}\n\n"
