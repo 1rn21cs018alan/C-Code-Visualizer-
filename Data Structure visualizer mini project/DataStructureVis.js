@@ -125,45 +125,45 @@ representDiv.appendChild(outerRepresentNode2);
 memoryDiv.appendChild(outerMemoryNode);
 
 // Function to draw an arrow between two elements
-function drawArrow(fromElement, toElement, svgElement) {
-    const fromRect = fromElement.getBoundingClientRect();
-    const toRect = toElement.getBoundingClientRect();
+// function drawArrow(fromElement, toElement, svgElement) {
+//     const fromRect = fromElement.getBoundingClientRect();
+//     const toRect = toElement.getBoundingClientRect();
 
-    const startX = fromRect.right;
-    const startY = fromRect.top + fromRect.height / 6;
-    const endX = toRect.left;
-    const endY = toRect.top + toRect.height / 6;
+//     const startX = fromRect.right;
+//     const startY = fromRect.top + fromRect.height / 6;
+//     const endX = toRect.left;
+//     const endY = toRect.top + toRect.height / 6;
 
-    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    arrow.setAttribute("x1", startX);
-    arrow.setAttribute("y1", startY);
-    arrow.setAttribute("x2", endX);
-    arrow.setAttribute("y2", endY);
-    arrow.setAttribute("stroke", "black");
-    arrow.setAttribute("stroke-width", "2");
-    arrow.setAttribute("marker-end", "url(#arrowhead)");
+//     const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+//     arrow.setAttribute("x1", startX);
+//     arrow.setAttribute("y1", startY);
+//     arrow.setAttribute("x2", endX);
+//     arrow.setAttribute("y2", endY);
+//     arrow.setAttribute("stroke", "black");
+//     arrow.setAttribute("stroke-width", "2");
+//     arrow.setAttribute("marker-end", "url(#arrowhead)");
 
-    svgElement.appendChild(arrow);
-}
+//     svgElement.appendChild(arrow);
+// }
 
-// Add a marker for the arrowhead
-const svgElement = document.getElementById("arrow-svg");
-const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
-marker.setAttribute("id", "arrowhead");
-marker.setAttribute("markerWidth", "10");
-marker.setAttribute("markerHeight", "7");
-marker.setAttribute("refX", "10");
-marker.setAttribute("refY", "3.5");
-marker.setAttribute("orient", "auto");
+// // Add a marker for the arrowhead
+// const svgElement = document.getElementById("arrow-svg");
+// const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+// marker.setAttribute("id", "arrowhead");
+// marker.setAttribute("markerWidth", "10");
+// marker.setAttribute("markerHeight", "7");
+// marker.setAttribute("refX", "10");
+// marker.setAttribute("refY", "3.5");
+// marker.setAttribute("orient", "auto");
 
-const arrowheadPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-arrowheadPath.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
-arrowheadPath.setAttribute("fill", "black");
+// const arrowheadPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+// arrowheadPath.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
+// arrowheadPath.setAttribute("fill", "black");
 
-marker.appendChild(arrowheadPath);
-svgElement.appendChild(marker);
+// marker.appendChild(arrowheadPath);
+// svgElement.appendChild(marker);
 
-// Example usage: draw an arrow from the second inner-box of the first outer-Represent to the first inner-box of the second outer-Represent
-const fromElement = innerRepresentNode2;
-const toElement = innerRepresentNode3;
-drawArrow(fromElement, toElement, svgElement);
+// // Example usage: draw an arrow from the second inner-box of the first outer-Represent to the first inner-box of the second outer-Represent
+// const fromElement = innerRepresentNode2;
+// const toElement = innerRepresentNode3;
+// drawArrow(fromElement, toElement, svgElement);

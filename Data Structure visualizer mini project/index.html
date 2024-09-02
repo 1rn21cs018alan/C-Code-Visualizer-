@@ -19,29 +19,24 @@
       <div class="sidebar">
         <div class="input-fields">
             <div class="cin-tag">
-                <textarea name="Cin" id="Cin">
-    
-                </textarea>
+                <textarea name="Cin" id="Cin">int main(){&#13;&#10;&Tab;return 0;&#13;&#10;}</textarea>
             </div>
             <div class="cout-tag">
-                <textarea name="Cout" id="Cout">
-    
-                </textarea>
+                <textarea name="Cout" id="Cout"></textarea>
             </div>
-
         </div>
+        <input type="button" class="compile-button" value="Compile" onclick=compile() >
       </div>
-      <input type="button" class="compile-button" value="Compile" onclick=compile() >
       <div class="container">
 
         <div class="Represent" name="Represent">
-          <div class="outer-Represent" id="node1" style="top: 145px;left:285px;">
+          <div class="outer-Represent" style="top: 145px;left:285px;">
             <div class="inner-box" id="one"></div>
             <!-- <hr class="center" id="line-1"></hr> -->
             <div class="inner-box" id="two"></div>
 
           </div>
-          <div class="outer-Represent" id="node2" style="top:20px;left:20px;">
+          <div class="outer-Represent" style="top:20px;left:20px;">
             <div class="inner-box" id="five"></div>
             <!-- <hr class="center" id="line-1"></hr> -->
             <div class="inner-box" id="six"></div>
@@ -68,9 +63,16 @@
   
         </div>
       </div>
-      <!-- Add the SVG element for the arrow -->
-      <svg id="arrow-svg" width="100%" height="100%" style="position:absolute; top:0; left:0; z-index:0;"></svg>
-    </div>
       <script src="DataStructureVis.js"></script>
+      <script src="index.js"></script>
+      <script>
+        createVariable('a','int',2);
+        createVariable('b','float',2);
+        createVariable('c','char',2);
+        malloc(32);
+        calloc(5,4);
+        render_Variables();
+        render_Memory();
+      </script>
 </body>
 </html>

@@ -2,5 +2,11 @@ one statement per line. Multiple statements have to be in different lines
 If,for,while,do-while, all must have opening curly brackets in same line
 closing curly bracket must be in seperate line(probably not in do while)
 only supports floating point division inside the expression
+Pointer type casting is unstable
 
-scope 0 object variables point to other variables with name "MEMORY_<number>"
+
+<discarding this idea>scope 0 object variables point to other variables with name "MEMORY_<number>"
+trying to support premade structures and arrays
+array of Structures not yet supported for rendering
+
+char takes 1 byte but is memory aligned to a 4 byte location unlike classical C
