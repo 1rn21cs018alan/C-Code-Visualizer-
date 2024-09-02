@@ -2826,7 +2826,7 @@ function setMemoryData(mem_loc, value) {
             data[0] = value
             return value
         } else {
-            Memory[mem_loc]['value'] = data
+            Memory[mem_loc]['value'] = value
             return value
         }
     }
