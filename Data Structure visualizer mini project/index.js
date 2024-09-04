@@ -2292,7 +2292,7 @@ function compile() {
     // main_function_outline=/^int main\(\){\n.*\treturn 0;\n}$/
     // main_function_outline=/^int main\(\){(.|\n)*\treturn 0;\n}$/
     // main_function_outline=/(int|(.|\n)*\nint) main\(\){(.|\n)*\treturn 0;\n}$/
-    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\treturn 0;\n}\s*$/
+    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
     if (main_function_outline.test(val)) {
         if (check_syntax(val)) {
             Cin_text = val
