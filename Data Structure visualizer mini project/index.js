@@ -3776,7 +3776,7 @@ function handleKey(e) {
         this.selectionStart = tab_index + 1
         this.selectionEnd = tab_index + 1
     }
-    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\treturn 0;\n}\s*$/
+    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
     sel_index = this.selectionStart
     setTimeout(() => {
         if (!main_function_outline.test(this.value)) {
