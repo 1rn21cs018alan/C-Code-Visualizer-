@@ -1,78 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Structure Visualizer</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Structure Visualizer</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <header>
-        <nav class="navigation">
-          <a href="#"></a>
-          <a href="#"></a>
-          <a href="#"></a>
-          <a href="#"></a>
-          <a href="#"></a>
-        </nav>
-      </header>
-      <div class="sidebar">
-        <div class="input-fields">
-            <div class="cin-tag">
-                <textarea name="Cin" id="Cin">int main(){&#13;&#10;&Tab;return 0;&#13;&#10;}</textarea>
-            </div>
-            <div class="cout-tag">
-                <textarea name="Cout" id="Cout"></textarea>
-            </div>
-        </div>
-        <input type="button" class="compile-button" value="Compile" onclick=compile() >
+  <header>
+    <nav class="navigation">
+      <a href="#"></a>
+      <a href="#"></a>
+      <a href="#"></a>
+      <a href="#"></a>
+      <a href="#"></a>
+    </nav>
+    <div class="slider-container">
+      <input type="range" id="sleepTimeSlider" min="1" max="999" value="333">
+      <p id="slider-speed">Speed: <span id="ExecutionSpeedValue">1.0x</span></p>
+    </div>
+  </header>
+  <div class="sidebar">
+    <div class="input-fields">
+      <div class="cin-tag">
+        <textarea name="Cin" id="Cin">int main(){&#13;&#10;&Tab;return 0;&#13;&#10;}</textarea>
       </div>
-      <div class="container">
-
-        <div class="Represent" name="Represent">
-          <div class="outer-Represent" style="top: 145px;left:285px;">
-            <div class="inner-box" id="one"></div>
-            <!-- <hr class="center" id="line-1"></hr> -->
-            <div class="inner-box" id="two"></div>
-
-          </div>
-          <div class="outer-Represent" style="top:20px;left:20px;">
-            <div class="inner-box" id="five"></div>
-            <!-- <hr class="center" id="line-1"></hr> -->
-            <div class="inner-box" id="six"></div>
-
-          </div>
-          <div class="outer-Represent" style="top:80px;left:40px;">
-            <div class="inner-box" id="seven"></div>
-            <!-- <hr class="center" id="line-1"></hr> -->
-            <div class="inner-box" id="eight"></div>
-
-          </div>
-             
-        </div>
-        <hr class="center-line">
-          
-        </hr>
-        <div class="Memory" name="Memory">
-          <div class="outer-Memory" style="top:20px;left:50px;">
-            <div class="inner-Memory-box" id="three"></div>
-            <!-- <hr class="center" id="line-2"></hr> -->
-            <div class="inner-Memory-box" id="four"></div>
-
-          </div>
-  
-        </div>
+      <div class="cout-tag">
+        <textarea name="Cout" id="Cout"></textarea>
       </div>
-      <script src="DataStructureVis.js"></script>
-      <script src="index.js"></script>
-      <script>
-        createVariable('a','int',2);
-        createVariable('b','float',2);
-        createVariable('c','char',2);
-        malloc(32);
-        calloc(5,4);
-        render_Variables();
-        render_Memory();
-      </script>
+    </div>
+    <input type="button" class="compile-button" value="Compile" onclick=compile()>
+  </div>
+  <div class="container">
+
+    <div class="Represent" name="Represent">
+      <div class="outer-Represent" style="top: 145px;left:285px;">
+        <div class="inner-box" id="one"></div>
+        <!-- <hr class="center" id="line-1"></hr> -->
+        <div class="inner-box" id="two"></div>
+
+      </div>
+      <div class="outer-Represent" style="top:20px;left:20px;">
+        <div class="inner-box" id="five"></div>
+        <!-- <hr class="center" id="line-1"></hr> -->
+        <div class="inner-box" id="six"></div>
+
+      </div>
+      <div class="outer-Represent" style="top:80px;left:40px;">
+        <div class="inner-box" id="seven"></div>
+        <!-- <hr class="center" id="line-1"></hr> -->
+        <div class="inner-box" id="eight"></div>
+
+      </div>
+
+    </div>
+    <hr class="center-line">
+
+    </hr>
+    <div class="Memory" name="Memory">
+      <div class="outer-Memory" style="top:20px;left:50px;">
+        <div class="inner-Memory-box" id="three"></div>
+        <!-- <hr class="center" id="line-2"></hr> -->
+        <div class="inner-Memory-box" id="four"></div>
+
+      </div>
+
+    </div>
+  </div>
+  <script src="DataStructureVis.js"></script>
+  <script src="index.js"></script>
+  <script>
+    createVariable('a', 'int', 2);
+    createVariable('b', 'float', 2);
+    createVariable('c', 'char', 2);
+    malloc(32);
+    calloc(5, 4);
+    render_Variables();
+    render_Memory();
+  </script>
 </body>
+
 </html>

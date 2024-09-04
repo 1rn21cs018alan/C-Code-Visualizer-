@@ -918,8 +918,12 @@ async function interpret(function_start_pointer, scope = 1) {
         else if (tokens[0] == 'return') {
             debugger;
         }
-        else {
+        else if (_top(tokens) == ';') {
             evaluate(tokens, scope)
+        }
+        else {
+            CrashNotif("Not a valid line")
+            return
         }
     }
 }
@@ -1031,6 +1035,9 @@ function evaluate(tokens, scope) {
             postfix_stack.push(elem)
             return;
         }
+        if (_top(operation_stack) == "." || _top(operation_stack) == '->') {
+            postfix_push(operation_stack.pop());
+        }
         if (elem == '(' || elem == '[') {
             operation_stack.push(elem)
             return;
@@ -1071,7 +1078,7 @@ function evaluate(tokens, scope) {
                         // pointer with index   
                         let elem_size = size_of(temp2['type'].slice(0, -1))
                         let final_pointer = getVariableData(temp2) + elem_size * index
-                        console.log(final_pointer)
+                        // console.log(final_pointer)
                         let accessed_variable = { 'addr': final_pointer, 'type': temp2['type'].slice(0, -1) }
                         postfix_stack.push(accessed_variable)
                     }
@@ -3068,6 +3075,44 @@ function render_Variables() {
         // for the local variables
         let col_num = 0, row_num = 0, scope = 1
         let arrows = []
+        let sll_cells = {}
+        let dll_cells = {}
+        let tree_cells = {}
+        let detect_sll_cycle = function (addr) {
+            let traversed_cells = []
+            let cycling_index = -1
+            let curr = addr
+            while (traversed_cells.indexOf(curr) == -1 || curr != NULL) {
+                traversed_cells.push(curr)
+                curr = safe_mem_access(curr)
+            }
+            if (curr != NULL) {
+                cycling_index = traversed_cells.indexOf(curr)
+            }
+            return {
+                "cells": traversed_cells,
+                "cycle_exists": (cycling_index != -1),
+                "cycle_index": cycling_index
+            }
+        }
+        let detect_dll_cycle = function (addr) {
+            let traversed_cells = []
+            let cycling_index = -1
+            let curr = addr
+            while (traversed_cells.indexOf(curr) == -1 || curr != NULL) {
+                traversed_cells.push(curr)
+                curr = safe_mem_access(curr)
+            }
+            if (curr != NULL) {
+                cycling_index = traversed_cells.indexOf(curr)
+            }
+            return {
+                "cycle_exists": (cycling_index != -1),
+            }
+        }
+        let arrangeTree = function (addr) {
+
+        }
         insertRow();
         let safe_mem_access = function (mem_loc) {
             if (mem_loc in Memory) {
@@ -3133,7 +3178,7 @@ function render_Variables() {
         let render_stack = function (variable) {
             let varNode = makeOuterRepresentNode()
             let table_cols = 3
-            variable['addr']
+            // variable['addr']
             //code to check if memory is accessible    
             let stk_arr = safe_mem_access(getMemoryData(variable['addr']));
             let stk_size = safe_mem_access(variable['addr'] + 8);
@@ -3160,7 +3205,7 @@ function render_Variables() {
             innerNode = makeValidInnerRepresentNode(stk_top)
             setCell(varNode, innerNode, table_rows - 1, 1)
             if (stk_top >= 0 && cells.length !== 0 && cells.length > stk_top) {
-                connects.push([innerNode, cells[stk_top],1,2,[[0,1]]])
+                connects.push([innerNode, cells[stk_top], 1, 2, [[0, 1]]])
             }
             innerNode = makeValidInnerRepresentNode(stk_size)
             setCell(varNode, innerNode, table_rows - 1, 2)
@@ -3177,7 +3222,56 @@ function render_Variables() {
             return [varNode, table_rows, table_cols, connects]
         }
         let render_queue = function (variable) {
-
+            let varNode = makeOuterRepresentNode()
+            let table_rows = 4
+            // variable['addr']
+            //code to check if memory is accessible    
+            let q_arr = safe_mem_access(getMemoryData(variable['addr']));
+            let q_size = safe_mem_access(variable['addr'] + 8);
+            let q_rear = safe_mem_access(variable['addr'] + 12);
+            let q_front = safe_mem_access(variable['addr'] + 16);
+            let cells = []
+            //code to detect no of rows for stack
+            let table_cols = 2
+            if (q_arr !== NULL) {
+                table_cols = 1 + q_size
+            }
+            maketable(varNode, table_rows + 1, table_cols);
+            for (let i = 0; i < table_cols - 1; i++) {
+                let elem_addr = getMemoryData(variable['addr']) + size_of('int') * i
+                let innerNode = makeValidInnerRepresentNode(safe_mem_access(elem_addr))
+                cells.push(innerNode);
+                setCell(varNode, innerNode, 3, i + 1)
+            }
+            let connects = []
+            let innerNode = makeValidInnerRepresentNode(safe_mem_access(variable['addr']))
+            setCell(varNode, innerNode, 3, 0)
+            if (cells.length !== 0) {
+                connects = [[innerNode, cells[0], 4, 0]]
+            }
+            innerNode = makeValidInnerRepresentNode(q_rear)
+            setCell(varNode, innerNode, 2, 0)
+            if (q_rear >= 0 && cells.length !== 0 && cells.length > q_rear) {
+                connects.push([innerNode, cells[q_rear], 2, 1, [[1, 0]]])
+            }
+            innerNode = makeValidInnerRepresentNode(q_front)
+            setCell(varNode, innerNode, 1, 0)
+            if (q_front >= 0 && cells.length !== 0 && cells.length > q_front) {
+                connects.push([innerNode, cells[q_front], 2, 1, [[1, 0]]])
+            }
+            innerNode = makeValidInnerRepresentNode(q_size)
+            setCell(varNode, innerNode, 0, 0)
+            if (variable['name'] !== undefined) {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['name']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            else {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['addr']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            return [varNode, table_rows, table_cols, connects]
         }
         let render_sll = function (variable) {
 
@@ -3339,6 +3433,20 @@ function render_Variables() {
                 arrows.push(...varNodeDetails[3]);
             }
             else if (temp['type'] == "struct queue") {
+                if (col_num != 0) {
+                    col_num = 0;
+                    row_num++;
+                    insertRow();
+                }
+                let varNodeDetails = render_queue(temp)
+                let varNode = varNodeDetails[0]
+                setCell(representDiv, varNode, row_num, col_num)
+                row_num += varNodeDetails[1];
+                for (let j = 0; j < varNodeDetails[1]; j++) {
+                    insertRow();
+                }
+                col_num = 0;
+                arrows.push(...varNodeDetails[3]);
             }
             else if (temp['type'] == "struct sll") {
             }
@@ -3683,11 +3791,26 @@ function handleKey(e) {
         }
     }, 0)
 }
-const sleep = function (ms) {
+const sleep = async function (ms) {
     if (ms === undefined) {
-        ms = sleepTime
+        let passed_time = 0, period = 100;
+        if (sleepTime < 100) {
+            await new Promise(r => setTimeout(r, sleepTime));
+            return
+        }
+        while (passed_time < sleepTime) {
+            await new Promise(r => setTimeout(r, 100));
+            passed_time += 100
+        }
     }
-    return new Promise(r => setTimeout(r, ms));
+    else {
+        let passed_time = 0
+        while (passed_time < ms) {
+            await new Promise(r => setTimeout(r, 100));
+            passed_time += 100
+        }
+    }
+    return
 }
 setTimeout(() => {
     // document.getElementById("Cin").value=stacks_struct+document.getElementById("Cin").value;
