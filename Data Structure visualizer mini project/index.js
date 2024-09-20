@@ -1,551 +1,18 @@
-// async function interpret(function_start_pointer, scope = 1) {
-//     // let datatypeExp = "((" + DataTypes[0] + ")"
-//     // for (let i = 1; i < DataTypes.length; i++) {
-//     //     datatypeExp += "|(" + DataTypes[i] + ")"
-//     // }
-//     // datatypeExp += ")"
-//     const variableExp = "[a-zA-Z_][a-zA-Z0-9_]*"
-
-//     // datatypeExp="d"
-//     // variableExp="v"
-
-//     regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
-//     regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "( *=[\\S\\s]+)? *;")
-//     const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+ *;")
-//     const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)? *;")
-//     // let function_start_pointer = 0
-//     // for (let i = 0; i < Program.length; i++) {
-//     //     let line = Program[i].trim()
-//     //     if (line === "int main(){") {
-//     //         function_start_pointer = i + 1
-//     //         break
-//     //     }
-//     // }
-//     // scope = cur_scope
-//     for (let i = function_start_pointer; i < Program.length - 1; i++) {
-//         render_Variables()
-//         render_Memory()
-//         let line = Program[i].trim()
-//         if (line === "") {
-//             continue;
-//         }
-//         await sleep();
-//         while (PAUSE_EXEC) {
-//             await sleep(300);
-//         }
-//         if (regex_var_decl.test(line)) {
-//             let type_data = line.match(datatypeExp)
-//             let var_names = line.slice(type_data['index'] + type_data[0].length, -1).split(",")
-//             console.log(var_names)
-//             for (let j = 0; j < var_names.length; j++) {
-//                 // varnames[j].match(variableExp)
-//                 let var_name = var_names[j].split("=")[0].trim()
-//                 let var_data = 0
-//                 if (var_names[j].split("=")[1]) {
-//                     // version without evaluation
-//                     // var_data = var_names[j].split("=")[1].trim()
-//                     // if (type_data[0] == "int") {
-//                     //     if (var_data.match(/^(-)?[0-9]+$/)) {
-//                     //         var_data = parseInt(var_data)
-//                     //     }
-//                     //     else {
-//                     //         CrashNotif({ "error word": "int mismatch" })
-//                     //         return
-//                     //     }
-//                     // }
-//                     // else if (type_data[0] == "float") {
-//                     //     if (var_data.match(/^(-)?[0-9]+(.[0-9]+)?$/)) {
-//                     //         var_data = parseFloat(var_data)
-//                     //     }
-//                     //     else {
-//                     //         CrashNotif({ "error word": "float mismatch" })
-//                     //         return
-//                     //     }
-//                     // }
-//                     // else if (type_data[0] == "char") {
-//                     //     if (var_data.match(/^'\S'$/)) {
-//                     //         var_data = var_data[1]
-//                     //     }
-//                     //     else {
-//                     //         CrashNotif({ "error word": "char mismatch" })
-//                     //         return
-//                     //     }
-
-//                     // } else {
-//                     //     console.log(type_data[0])
-//                     //     console.log("Can only initialize int,float or char variables during declaration")
-//                     //     return;
-//                     // }
-//                     //version with evaluation
-//                     var_data = evaluate(var_names[j].slice(var_names[j].indexOf('=') + 1), scope)
-//                     if (type_data[0] == var_data['type']) {
-//                         var_data = var_data['value']
-//                     }
-//                     else if (type_data[0] == 'int') {
-//                         var_data = TypeCastInt(var_data)
-//                     } else if (type_data[0] == 'float') {
-//                         var_data = TypeCastFloat(var_data)
-//                     } else if (type_data[0] == 'char') {
-//                         var_data = TypeCastChar(var_data)
-//                     } else {
-//                         CrashNotif({ 'error word': 'wrong dtype initialization' })
-//                         return;
-//                     }
-//                 }
-//                 else if (type_data != "int" && type_data != "float") {
-//                     if (type_data == 'char') {
-//                         var_data = '\0'
-//                     }
-//                     else {
-//                         var_data = NULL
-//                     }
-//                 }
-//                 // version 1
-//                 // for (let k = 0; k < Variables.length; k++) {
-//                 //     if (Variables[k]['name'] == var_name && (Variables[k]['scope'] == scope || Variables[k]['scope'] == 0)) {
-//                 //         CrashNotif({ "error word": "Variable of same name already exists" })
-//                 //         return
-//                 //         //crashed
-//                 //     }
-//                 // }
-
-//                 // version 2
-//                 if (getVariableIndex(var_name, scope) !== undefined) {
-//                     CrashNotif({ "error word": "Variable of same name already exists" })
-//                     return
-//                     //crashed
-//                 }
-//                 // console.log("made var")
-//                 Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': type_data[0], 'scope': scope, 'div': makeNode(0, var_name + ":" + var_data) })
-//             }
-//         }
-//         else if (regex_assign.test(line)) {
-//             let var_name = line.split("=")[0]
-//             let var_data = line.slice(var_name.length + 1, -1)
-//             var_name = var_name.trim()
-//             //verision 1
-//             // let match = undefined
-//             // for (let j = 0; j < Variables.length; j++) {
-//             //     if (Variables[j]['name'] == var_name && (Variables[j]['scope'] == scope || Variables[j]['scope'] == 0))//scope 0=malloced values
-//             //     {
-//             //         match = j
-//             //         break
-//             //     }
-//             // }
-//             let match = getVariableIndex(var_name, scope)
-//             if (match === undefined) {
-//                 CrashNotif({ "error word": "No such Variable" })
-//                 return;
-//                 //crashed program
-//             }
-//             else {
-//                 let type_data = Variables[match]['type']
-//                 let temp = evaluate(var_data, scope)
-//                 if (type_data == temp['type']) {
-//                     Variables[match]['value'] = temp['value']
-//                     //render element
-//                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                 }
-//                 else if (type_data == "int") {
-//                     // Variables[match]['value'] = TypeCastInt(temp['value'])
-//                     Variables[match]['value'] = TypeCastInt(temp)
-//                     if (Variables[match]['value'] === undefined) {
-//                         return
-//                     }
-//                     //render element
-//                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                 }
-//                 else if (type_data == "float") {
-//                     // Variables[match]['value'] = TypeCastFloat(temp['value'])
-//                     Variables[match]['value'] = TypeCastFloat(temp)
-//                     if (Variables[match]['value'] === undefined) {
-//                         return
-//                     }
-//                     //render element
-//                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                 }
-//                 else if (type_data == "char") {
-//                     // Variables[match]['value'] = TypeCastChar(temp['value'])
-//                     Variables[match]['value'] = TypeCastChar(temp)
-//                     if (Variables[match]['value'] === undefined) {
-//                         return
-//                     }
-//                     //render element
-//                     Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                 } else {
-//                     CrashNotif({ "error word": "Type mismatch" })
-//                     return undefined
-//                 }
-//             }
-
-//         }
-//         else if (regex_of_function.test(line)) {
-
-//         }
-//         else {
-//             // console.log(line)
-//             let word = getWord(line, 0)
-//             console.log(word)
-//             if (word === undefined) {
-//                 debugger
-//                 if (line.indexOf('}') !== -1) {
-//                     let temp = Branch_stack[Branch_stack.length - 1]
-//                     if (temp['keyword'] == 'if' && temp['inner_scope'] == scope) {
-//                         scope -= 1
-//                         i = temp['end'] - 1
-//                         Branch_stack.pop()
-//                         deallocateOutOfScopeVariables(scope)
-//                     }
-//                     else if (temp['keyword'] == 'for' && temp['inner_scope'] == scope) {
-//                         deallocateOutOfScopeVariables(scope - 1)
-//                         if (regex_assign.test(temp['update_exp'] + ";")) {
-//                             let var_name = temp['update_exp'].split("=")[0]
-//                             let temp2 = evaluate(temp['update_exp'].slice(var_name.length + 1), scope + 1)
-//                             let match = getVariableIndex(var_name, scope - 1)
-
-//                             let type_data = Variables[match]['type']
-//                             if (type_data == temp2['type']) {
-//                                 Variables[match]['value'] = temp2['value']
-//                                 //render element
-//                                 Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                             }
-//                             else if (type_data == "int") {
-//                                 Variables[match]['value'] = TypeCastInt(temp2)
-//                                 if (Variables[match]['value'] === undefined) {
-//                                     return
-//                                 }
-//                                 //render element
-//                                 Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                             }
-//                             else if (type_data == "float") {
-//                                 Variables[match]['value'] = TypeCastFloat(temp2)
-//                                 if (Variables[match]['value'] === undefined) {
-//                                     return
-//                                 }
-//                                 //render element
-//                                 Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                             }
-//                             else if (type_data == "char") {
-//                                 Variables[match]['value'] = TypeCastChar(temp2)
-//                                 if (Variables[match]['value'] === undefined) {
-//                                     return
-//                                 }
-//                                 //render element
-//                                 Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                             } else {
-//                                 CrashNotif({ "error word": "Type mismatch" })
-//                                 return undefined
-//                             }
-
-//                         }
-//                         let pass = evaluate(temp['test_exp'], scope - 1)
-//                         if (pass === undefined) {
-//                             deallocateOutOfScopeVariables(scope - 1)
-//                             i = temp['start'] - 1
-//                         }
-//                         else if (pass['value'] == 0) {
-
-//                             Branch_stack.pop()
-//                             scope -= 2
-//                             deallocateOutOfScopeVariables(scope)
-//                             i = temp['end'] - 1
-//                         }
-//                         else {
-//                             deallocateOutOfScopeVariables(scope - 1)
-//                             i = temp['start'] - 1
-//                         }
-//                     }
-//                 }
-//             }
-//             else if (word['word'] == "if") {
-//                 // console.log("if condition detected")
-//                 //get expression in if
-//                 if (/^\s*if\s*\(.*\)\s*\{\s*$/.test(line)) {
-//                     // console.log("valid if")
-//                 }
-//                 let exp = line.slice(word['end']).split('{', 1)[0]
-//                 // console.log(exp)
-//                 let pass = evaluate(exp, scope)
-//                 // console.log(pass)
-//                 let if_code = getContainer(i, Program[i].indexOf("{"))
-//                 // console.log(if_code)
-//                 let If_data = { "keyword": "if", "else": undefined, "end": if_code["end"][0] + 1, "inner_scope": scope + 1 }
-//                 if (Program[If_data["end"]].includes("else")) {
-//                     let j = If_data["end"]
-//                     If_data["else"] = j
-//                     while (Program[j].includes("else if")) {
-//                         let elif_code = getContainer(j, Program[j].indexOf("{"))
-//                         j = elif_code["end"][0] + 1
-//                         If_data["end"] = j
-//                     }
-//                     if (Program[j].includes("else")) {
-//                         let else_code = getContainer(j, Program[j].indexOf("{"))
-//                         If_data["end"] = else_code["end"][0] + 1
-//                     }
-//                 }
-//                 Branch_stack.push(If_data)
-//                 if (pass['value'] == 0) { //did not enter if condition
-//                     // console.log("failed")
-//                     if (If_data["else"] === undefined) {
-//                         i = If_data["end"] - 1
-//                         Branch_stack.pop()
-//                     }
-//                     else {
-//                         i = If_data["else"] - 1
-//                     }
-//                 }
-//                 else {//entered if condition
-//                     scope += 1
-//                     // console.log("passed")
-//                 }
-
-//             }
-//             else if (word['word'] == "else") {
-//                 let temp = Branch_stack[Branch_stack.length - 1]
-//                 if (temp === undefined) {
-//                     CrashNotif({ "error word": "No if condition detected" })
-//                     return
-//                 }
-
-//                 if (temp["keyword"] != "if") {
-//                     CrashNotif({ "error word": "No if condition detected" })
-//                     return
-//                 }
-
-//                 if (temp["inner_scope"] == scope + 1) {
-//                     if (Program[i].includes("if")) {
-//                         let code = getContainer(i, Program[i].indexOf("{"))
-//                         temp['else'] = undefined
-//                         if (Program[code['end'][0] + 1].includes("else")) {
-//                             temp['else'] = code['end'][0] + 1
-//                         }
-//                         let exp = Program[i].slice(Program[i].indexOf('('), code['start'][1])
-//                         // console.log(exp)
-//                         let pass = evaluate(exp, scope)
-//                         // console.log(pass)
-//                         if (pass === undefined) {
-//                             pass = { 'value': 1 }
-//                         }
-//                         if (pass['value'] == 0) { //did not enter if condition
-//                             // console.log("failed")
-//                             if (temp["else"] === undefined) {
-//                                 i = temp["end"] - 1
-//                                 Branch_stack.pop()
-//                             }
-//                             else {
-//                                 i = temp["else"] - 1
-//                             }
-//                         }
-//                         else {//entered if condition
-//                             scope += 1
-//                             // console.log("passed")
-//                         }
-
-//                     }
-//                     else {
-//                         temp['else'] = undefined
-//                         scope += 1
-//                     }
-//                 }
-//                 else {
-//                     CrashNotif({ "error word": "No if condition deteted" })
-//                     return
-//                 }
-
-//             }
-//             else if (word['word'] == "for") {
-//                 if (/^\s*for\s*\(.*;.*;.*\)\s*\{\s*$/.test(line)) {
-//                     let init_exp = line.slice(line.indexOf('(') + 1, line.indexOf(';'))
-//                     let test_exp = line.slice(line.indexOf(';') + 1, line.lastIndexOf(';'))
-//                     let update_exp = line.slice(line.lastIndexOf(';') + 1, line.lastIndexOf(')'))
-//                     let for_code = getContainer(i, Program[i].indexOf('{'))
-//                     if (for_code == undefined) {
-//                         CrashNotif({ "error word": "For loop syntax error" })
-//                         return
-//                     }
-//                     let for_data = { "keyword": "for", "start": i + 1, "end": for_code['end'][0] + 1, "test_exp": test_exp, "update_exp": update_exp, "inner_scope": scope + 2 }
-//                     Branch_stack.push(for_data)
-//                     if (regex_var_decl.test(init_exp + ";")) {
-//                         let temp = getWord(init_exp, 0)
-//                         let var_type = temp['word']
-//                         let declarations = init_exp.slice(temp['end']).split(",")
-//                         for (let j = 0; j < declarations.length; j++) {
-//                             let var_name = getWord(declarations[j], 0)['word']
-//                             let var_data = evaluate(declarations[j].slice(declarations[j].split('=')[0].length + 1), scope + 1)
-//                             if (var_type == "int") {
-//                                 var_data = TypeCastInt(var_data)
-//                                 Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
-//                             }
-//                             else if (var_type == "float") {
-//                                 var_data = TypeCastFloat(var_data)
-//                                 Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
-//                             }
-//                             else if (var_type == 'char') {
-//                                 var_data = TypeCastChar(var_data)
-//                                 Variables.push({ 'addr': 0, 'name': var_name, 'value': var_data, 'type': var_type, 'scope': scope + 1, 'div': makeNode(0, var_name + ":" + var_data) })
-//                             }
-//                         }
-//                     }
-//                     else {//not declaring
-//                         let var_name = init_exp.split("=")[0]
-//                         let temp = evaluate(init_exp.slice(var_name.length + 1), scope + 1)
-//                         let match = getVariableIndex(var_name, scope + 1)
-
-//                         let type_data = Variables[match]['type']
-//                         if (type_data == temp['type']) {
-//                             Variables[match]['value'] = temp['value']
-//                             //render element
-//                             Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                         }
-//                         else if (type_data == "int") {
-//                             // Variables[match]['value'] = TypeCastInt(temp['value'])
-//                             Variables[match]['value'] = TypeCastInt(temp)
-//                             if (Variables[match]['value'] === undefined) {
-//                                 return
-//                             }
-//                             //render element
-//                             Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-//                         }
-//                         else if (type_data == "float") {
-//                             // Variables[match]['value'] = TypeCastFloat(temp['value'])
-//                             Variables[match]['value'] = TypeCastFloat(temp)
-//                             if (Variables[match]['value'] === undefined) {
-//                                 return
-//                             }
-//                             //render element
-//                             Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                         }
-//                         else if (type_data == "char") {
-//                             // Variables[match]['value'] = TypeCastChar(temp['value'])
-//                             Variables[match]['value'] = TypeCastChar(temp)
-//                             if (Variables[match]['value'] === undefined) {
-//                                 return
-//                             }
-//                             //render element
-//                             Variables[match]['div'].innerHTML = Variables[match]['addr'] + "|" + Variables[match]['name'] + ":" + Variables[match]['value']
-
-//                         } else {
-//                             CrashNotif({ "error word": "Type mismatch" })
-//                             return undefined
-//                         }
-
-//                     }
-//                     let pass = evaluate(test_exp, scope + 1)
-//                     if (pass === undefined) {
-//                         scope += 2
-//                     }
-//                     else if (pass['value'] == 0) {
-
-//                         //exit before start
-//                         Branch_stack.pop()
-//                         deallocateOutOfScopeVariables(scope)
-//                         i = for_code['end'][0]
-//                     }
-//                     else {
-//                         //enter loop
-//                         scope += 2
-//                     }
-//                 }
-//                 else {
-//                     CrashNotif({ 'error word': "for loop syntax is wrong" })
-//                     return
-//                 }
-//             }
-//             else if (word['word'] == "while") {
-//                 let test_exp = line.slice(line.indexOf('('), line.lastIndexOf('{'))
-//                 let loop_code = getContainer(i, Program[i].indexOf('{'))
-//                 if (loop_code == undefined) {
-//                     CrashNotif({ "error word": "While loop syntax error" })
-//                     return
-//                 }
-//                 let for_data = { "keyword": "for", "start": i + 1, "end": loop_code['end'][0] + 1, "test_exp": test_exp, "update_exp": "1", "inner_scope": scope + 2 }
-//                 Branch_stack.push(for_data)
-//                 let pass = evaluate(test_exp, scope + 1)
-//                 if (pass === undefined) {
-//                     scope += 2
-//                 }
-//                 else if (pass['value'] == 0) {
-//                     //exit before start
-//                     Branch_stack.pop()
-//                     deallocateOutOfScopeVariables(scope)
-//                     i = loop_code['end'][0]
-//                 }
-//                 else {
-//                     //enter loop
-//                     scope += 2
-//                 }
-//             }
-//             else if (word['word'] == "do") {
-//                 let loop_code = getContainer(i, Program[i].indexOf('{'))
-//                 if (loop_code == undefined) {
-//                     CrashNotif({ "error word": "do while loop syntax error" })
-//                     return
-//                 }
-//                 else if (!(/^\s*\}\s*while\s*\([\S\s]*\)\s*;\s*$/.test(Program[loop_code['end'][0]]))) {
-//                     CrashNotif({ "error word": "do while loop syntax error" })
-//                     return
-//                 }
-//                 line = Program[loop_code['end'][0]]
-//                 let test_exp = line.slice(line.indexOf('('), line.lastIndexOf(';'))
-//                 let for_data = { "keyword": "for", "start": i + 1, "end": loop_code['end'][0] + 1, "test_exp": test_exp, "update_exp": "1", "inner_scope": scope + 2 }
-//                 Branch_stack.push(for_data)
-//                 scope += 2
-//             }
-//             else if (word['word'] == 'break') {
-//                 if (/^\s*break\s*;\s*$/.test(Program[i])) {
-//                     for (let j = Branch_stack.length - 1; j >= 0; j--) {
-//                         if (Branch_stack[j]['keyword'] == 'for') {
-//                             i = Branch_stack[j]['end'] - 1
-//                             scope = Branch_stack[j]['inner_scope'] - 2
-//                             deallocateOutOfScopeVariables(scope)
-//                             break;
-//                         }
-//                         else {
-//                             Branch_stack.pop()
-//                         }
-//                     }
-//                 }
-//             }
-//             else if (word['word'] == 'continue') {
-//                 if (/^\s*continue\s*;\s*$/.test(Program[i])) {
-//                     for (let j = Branch_stack.length - 1; j >= 0; j--) {
-//                         if (Branch_stack[j]['keyword'] == 'for') {
-//                             i = Branch_stack[j]['end'] - 2
-//                             scope = Branch_stack[j]['inner_scope']
-//                             break;
-//                         }
-//                         else {
-//                             Branch_stack.pop()
-//                         }
-//                     }
-//                 }
-//             }
-//             else {
-//                 debugger;
-//             }
-//         }
-//     }
-//     // console.log(Program)
-// }
+"use strict";
+var Current_Line = 0
 async function interpret(function_start_pointer, scope = 1) {
     const variableExp = "[a-zA-Z_][a-zA-Z0-9_]*"
-    regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
-    regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "( *=[\\S\\s]+)? *;")
-    const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+ *;")
-    const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)? *;")
-
+    //regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
+    //regex_var_decl = new RegExp("^\\s*" + datatypeExp + " +(" + variableExp + " *(=[\\S\\s]+)? *, *)*" + variableExp + "( *=[\\S\\s]+)? *;")
+    //const regex_assign = new RegExp("^\\s*" + variableExp + " *=[\\S\\s]+ *;")
+    //const regex_return = new RegExp("^\\s*return *( [\\S\\s]*)? *;")
     for (let i = function_start_pointer; i < Program.length - 1; i++) {
         render_Variables()
         render_Memory()
         debugger;
         let line = Program[i].trim()
         let tokens = lineLexer(line)
-        if (line === "") {
+        if (line === "" || tokens.length === 0) {
             continue;
         }
         await sleep();
@@ -572,6 +39,9 @@ async function interpret(function_start_pointer, scope = 1) {
                     if (bracket_balance == 0) {
                         if (tokens[j] == ']') {
                             let arr_dim_size = evaluate(array_size_tokens, scope)
+                            if (arr_dim_size['value'] === undefined) {
+                                arr_dim_size = { "value": getVariableData(arr_dim_size), "type": "int" }
+                            }
                             array_dim.push(arr_dim_size)
                             array_size_tokens = []
                         } else {
@@ -1944,9 +1414,7 @@ function evaluate(tokens, scope) {
                         break;
                     case '->':
                         if (op1['addr'] !== undefined) {
-                            // CrashNotif('Cant access temporary variable')
-                            op1 = { 'value': getMemoryData(op1['addr']), 'type': op1['type'], addr: op1['addr'] }
-                            return
+                            op1 = { 'value': getMemoryData(op1['addr']), 'type': op1['type'], 'addr': op1['addr'] }
                         }
                         if (op1['type'] == "struct stack*") {
                             if (op2 == 'arr') {
@@ -2087,44 +1555,7 @@ function evaluate(tokens, scope) {
     result = postfix_stack[0]
     return result
 }
-// function getWord(line, StartIndex) {
-//     let readmode = 0
-//     let Wordstart = StartIndex, Wordend = StartIndex
-//     for (let i = StartIndex; i < line.length; i++) {
-//         if (readmode == 0) {
-//             if (/^[ \t]$/.test(line[i])) {
-//                 Wordstart++
-//                 continue
-//             }
-//             else if (/^[a-zA-Z_]$/.test(line[i])) {
-//                 readmode = 1
-//             }
-//             else {
-//                 break;
-//             }
-//         }
-//         else if (readmode == 1) {
-//             if (/^[0-9a-zA-Z_]$/.test(line[i])) {
-//                 Wordend = i
-//             }
-//             else {
-//                 readmode = 2
-//                 Wordend = i
-//                 break;
-//             }
-//         }
-//     }
-//     if (readmode == 2) {
-//         return { "word": line.slice(Wordstart, Wordend), "end": Wordend }
-//     }
-//     else if (readmode == 1) {
-//         Wordend++
-//         return { "word": line.slice(Wordstart, Wordend), "end": Wordend }
-//     }
-//     else {
-//         return undefined
-//     }
-// }
+
 function getContainer(StartLine, StartIndex) {
     let brackets_stack = []
     let in_string = false
@@ -2214,9 +1645,6 @@ function deallocateOutOfScopeVariables(current_scope) {
         }
     }
 }
-// function removeVariable(variable) {
-//     variable['div'].remove()
-// }
 function CrashNotif(extra_detail) {
     if (typeof (extra_detail) == 'string') {
         extra_detail = { 'error word': extra_detail }
@@ -2292,7 +1720,7 @@ function compile() {
     // main_function_outline=/^int main\(\){\n.*\treturn 0;\n}$/
     // main_function_outline=/^int main\(\){(.|\n)*\treturn 0;\n}$/
     // main_function_outline=/(int|(.|\n)*\nint) main\(\){(.|\n)*\treturn 0;\n}$/
-    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
+    const main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
     if (main_function_outline.test(val)) {
         if (check_syntax(val)) {
             Cin_text = val
@@ -2304,7 +1732,7 @@ function compile() {
             }
             datatypeExp += ")"
             const variableExp = "[a-zA-Z_][a-zA-Z0-9_]*"
-            regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
+            const regex_of_function = new RegExp("^\\s*" + datatypeExp + " +" + variableExp + "\\(( *(" + datatypeExp + " +" + variableExp + " *, *)*( *" + datatypeExp + " +" + variableExp + ") *)?" + "\\)\\{ *$")
 
             let function_start_pointer = 0
             for (let i = 0; i < Program.length; i++) {
@@ -2645,7 +2073,7 @@ function lineLexer(text) {
                         // console.log(temp)
                         temp = JSON.parse(`"${temp.slice(1, -1)}"`)
                     }
-                    y = tokens.push({ 'value': temp, 'type': 'char' })
+                    tokens.push({ 'value': temp, 'type': 'char' })
                     temp = ""
                 }
             }
@@ -3059,30 +2487,59 @@ function free_mem(mem_loc, force) {
 function render_Variables() {
     if (representDiv) {
         // while(representDiv.firstChild){representDiv.removeChild(representDiv.lastChild)}
+        let scrollAmount = [representDiv.scrollTop, representDiv.scrollLeft]
         representDiv.innerHTML = ""
         svgElement.innerHTML = ""
+        svgElement.style.height="0px"
+        svgElement.style.width="0px"
+        // svgElement.style.height = "0px";
         svgElement.appendChild(marker)
-        representDiv.appendChild(svgElement)
-        let table = document.createElement("table");
-        representDiv.appendChild(table);
-        let insertRow = function () {
-            const row = table.insertRow();
-            for (let j = 0; j < 6; j++) {
-                let cell = row.insertCell();
-                cell.classList.add("visual_cell");
-            }
-        }
+        const positioningDiv = document.createElement('div')
+        positioningDiv.setAttribute("position", "relative")
+        representDiv.appendChild(positioningDiv)
+        // let table = document.createElement("table");
+        // representDiv.appendChild(table);
+        // let insertRow = function () {
+        //     const row = table.insertRow();
+        //     for (let j = 0; j < 6; j++) {
+        //         let cell = row.insertCell();
+        //         cell.classList.add("visual_cell");
+        //     }
+        // }
         // for the local variables
-        let col_num = 0, row_num = 0, scope = 1
+        let scope = 1, appendingLoc = [0, 0], lastRowHeight = 0
+        function nextRow() {
+            appendingLoc[1] += lastRowHeight;
+            appendingLoc[0] = 0;
+            lastRowHeight = 0;
+        }
+        function setAtCoords(innerNode, force_overflow = false) {
+            if (force_overflow == false && appendingLoc[0] > 500) {
+                nextRow();
+            }
+            innerNode.style.top = appendingLoc[1] + "px";
+            innerNode.style.left = appendingLoc[0] + "px";
+            innerNode.style.position = "absolute";
+            innerNode.style.zIndex = 3;
+            positioningDiv.appendChild(innerNode);
+            if (lastRowHeight < innerNode.offsetHeight + 3) {
+                lastRowHeight = innerNode.offsetHeight + 3
+            }
+            appendingLoc[0] += innerNode.offsetWidth + 3;
+            // console.log(lastRowHeight, "Setting at", ...appendingLoc,innerNode,innerNode.offsetHeight)
+        }
         let arrows = []
         let sll_cells = {}
+        let sll_connections = []
         let dll_cells = {}
+        let dll_connections = []
         let tree_cells = {}
+        let tree_connections = []
         let detect_sll_cycle = function (addr) {
             let traversed_cells = []
             let cycling_index = -1
             let curr = addr
-            while (traversed_cells.indexOf(curr) == -1 || curr != NULL) {
+            while (traversed_cells.indexOf(curr) == -1 && curr != NULL) {
                 traversed_cells.push(curr)
                 curr = safe_mem_access(curr)
             }
@@ -3099,21 +2556,27 @@ function render_Variables() {
             let traversed_cells = []
             let cycling_index = -1
             let curr = addr
-            while (traversed_cells.indexOf(curr) == -1 || curr != NULL) {
+            while (traversed_cells.indexOf(curr) == -1 && curr != NULL) {
                 traversed_cells.push(curr)
                 curr = safe_mem_access(curr)
+                if (curr!=NULL && safe_mem_access(curr + 8) != _top(traversed_cells)) {
+                    traversed_cells.push(curr)
+                    break
+                }
             }
-            if (curr != NULL) {
+            if (curr != NULL && safe_mem_access(curr + 8) == _top(traversed_cells)) {
                 cycling_index = traversed_cells.indexOf(curr)
             }
             return {
+                "cells": traversed_cells,
+                "cycle_index": cycling_index,
                 "cycle_exists": (cycling_index != -1),
             }
         }
         let arrangeTree = function (addr) {
-
+            
         }
-        insertRow();
+        // insertRow();
         let safe_mem_access = function (mem_loc) {
             if (mem_loc in Memory) {
                 let data = Memory[mem_loc]['value']
@@ -3273,14 +2736,96 @@ function render_Variables() {
             }
             return [varNode, table_rows, table_cols, connects]
         }
-        let render_sll = function (variable) {
+        let render_sll = function (variable, inplace = false) {
+            // let cells=detect_sll_cycle(variable['addr'])
 
+            let varNode = makeOuterRepresentNode()
+            let table_cols = 2
+            let next = safe_mem_access(variable['addr']);
+            let info = safe_mem_access(variable['addr'] + 8);
+            let table_rows = 1
+            maketable(varNode, table_rows + 1, table_cols);
+            let innerNode = makeValidInnerRepresentNode(next)
+            setCell(varNode, innerNode, table_rows - 1, 1)
+            innerNode = makeValidInnerRepresentNode(info)
+            setCell(varNode, innerNode, table_rows - 1, 0)
+            sll_connections.push([variable['addr'], safe_mem_access(next)])
+            if (!inplace) {
+                sll_cells[variable['addr']] = [varNode]
+            }
+            if (variable['name'] !== undefined) {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['name']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            else {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['addr']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            return [varNode, table_rows, table_cols, []]
         }
-        let render_dll = function (variable) {
-
+        let render_dll = function (variable, inplace = false) {
+            let varNode = makeOuterRepresentNode()
+            let table_cols = 3
+            let next = safe_mem_access(variable['addr']);
+            let prev = safe_mem_access(variable['addr'] + 8);
+            let info = safe_mem_access(variable['addr'] + 16);
+            let table_rows = 1
+            maketable(varNode, table_rows + 1, table_cols);
+            let innerNode = makeValidInnerRepresentNode(prev)
+            setCell(varNode, innerNode, table_rows - 1, 0)
+            innerNode = makeValidInnerRepresentNode(info)
+            setCell(varNode, innerNode, table_rows - 1, 1)
+            innerNode = makeValidInnerRepresentNode(next)
+            setCell(varNode, innerNode, table_rows - 1, 2)
+            dll_connections.push([variable['addr'], safe_mem_access(next)])
+            dll_connections.push([variable['addr'], safe_mem_access(prev)])
+            if (!inplace) {
+                dll_cells[variable['addr']] = [varNode]
+            }
+            if (variable['name'] !== undefined) {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['name']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            else {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['addr']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            return [varNode, table_rows, table_cols, []]
         }
-        let render_tree = function (variable) {
-
+        let render_tree = function (variable, inplace = false) {
+            let varNode = makeOuterRepresentNode()
+            let table_cols = 3
+            let left = safe_mem_access(variable['addr']);
+            let right = safe_mem_access(variable['addr'] + 8);
+            let info = safe_mem_access(variable['addr'] + 16);
+            let table_rows = 1
+            maketable(varNode, table_rows + 1, table_cols);
+            let innerNode = makeValidInnerRepresentNode(left)
+            setCell(varNode, innerNode, table_rows - 1, 0)
+            innerNode = makeValidInnerRepresentNode(info)
+            setCell(varNode, innerNode, table_rows - 1, 1)
+            innerNode = makeValidInnerRepresentNode(right)
+            setCell(varNode, innerNode, table_rows - 1, 2)
+            tree_connections.push([variable['addr'], safe_mem_access(left)])
+            tree_connections.push([variable['addr'], safe_mem_access(right)])
+            if (!inplace) {
+                tree_cells[variable['addr']] = [varNode]
+            }
+            if (variable['name'] !== undefined) {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['name']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            else {
+                let innerNode = document.createElement('p')
+                innerNode.textContent = variable['addr']
+                setCell(varNode, innerNode, table_rows, 0)
+            }
+            return [varNode, table_rows, table_cols, []]
         }
         let render_array = function (variable) {
             let varNode = makeOuterRepresentNode()
@@ -3327,6 +2872,38 @@ function render_Variables() {
                             setCell(varNode, rendered[0], j + i * table_cols, 0)
                             continue
                         }
+                        else if (elem_type === 'struct queue') {
+                            let elem_addr = variable['addr'] + size_of(elem_type) * (j + i * table_cols)
+                            let rendered = render_queue({ "addr": elem_addr })
+                            extra_rows += rendered[1]
+                            connects.push(...rendered[3])
+                            setCell(varNode, rendered[0], j + i * table_cols, 0)
+                            continue
+                        }
+                        else if (elem_type === 'struct sll') {
+                            let elem_addr = variable['addr'] + size_of(elem_type) * (j + i * table_cols)
+                            // let innerNode=makeInnerRepresentNode();
+                            let rendered = render_sll({ "addr": elem_addr }, true)
+                            extra_rows += rendered[1]
+                            setCell(varNode, rendered[0], j + i * table_cols, 0)
+                            continue
+                        }
+                        else if (elem_type === 'struct dll') {
+                            let elem_addr = variable['addr'] + size_of(elem_type) * (j + i * table_cols)
+                            // let innerNode=makeInnerRepresentNode();
+                            let rendered = render_dll({ "addr": elem_addr }, true)
+                            extra_rows += rendered[1]
+                            setCell(varNode, rendered[0], j + i * table_cols, 0)
+                            continue
+                        }
+                        else if (elem_type === 'struct tree') {
+                            let elem_addr = variable['addr'] + size_of(elem_type) * (j + i * table_cols)
+                            // let innerNode=makeInnerRepresentNode();
+                            let rendered = render_tree({ "addr": elem_addr }, true)
+                            extra_rows += rendered[1]
+                            setCell(varNode, rendered[0], j + i * table_cols, 0)
+                            continue
+                        }
                     }
                     else if (elem_type.indexOf('**') != -1) {
                         // double pointer not yet supported
@@ -3347,6 +2924,128 @@ function render_Variables() {
             }
             return [varNode, table_rows + extra_rows, table_cols + extra_cols, connects]
         }
+        let render_pointer = function (variable) {
+            let ReturnData = {
+                'Pointer_Node': undefined,
+                'Outer_Node': undefined,
+                'Connects': [],
+                'Extra_Height': 0,
+                'Extra_Width': 0,
+                'Pointing_To': []
+            }
+            let varNode = makeOuterRepresentNode()
+            maketable(varNode, 2, 1);
+            ReturnData['Outer_Node'] = varNode;
+            let innerNode = makeInnerRepresentNode()
+            innerNode.textContent = getVariableData(variable)
+            setCell(varNode, innerNode, 0, 0)
+            ReturnData['Pointer_Node'] = innerNode;
+            innerNode = document.createElement('p')
+            if (variable['name'] !== undefined) {
+                innerNode.textContent = variable['name']
+            }
+            else {
+                innerNode.textContent = variable['addr']
+            }
+            setCell(varNode, innerNode, 1, 0)
+            if (safe_mem_access(safe_mem_access(variable['addr'])) == NULL) {
+                innerNode = makeValidInnerRepresentNode(NULL);
+                // setAtCoords(innerNode);
+                ReturnData['Pointing_To'].push(innerNode);
+                ReturnData['Connects'].push([ReturnData['Pointer_Node'], innerNode, 4, -0.15]);
+            }
+            else if (variable['type'] == 'int*' || variable['type'] == 'char*' || variable['type'] == 'float*') {
+                varNode = makeOuterRepresentNode()
+                maketable(varNode, 2, 1);
+                ReturnData['Pointing_To'].push(varNode);
+                innerNode = makeInnerRepresentNode()
+                innerNode.textContent = safe_mem_access(safe_mem_access(variable['addr']))
+                setCell(varNode, innerNode, 0, 0)
+                innerNode = document.createElement('p')
+                innerNode.textContent = safe_mem_access(variable['addr'])
+                setCell(varNode, innerNode, 1, 0)
+                ReturnData['Connects'].push([ReturnData['Pointer_Node'], varNode, 4, 0]);
+            }
+            else if (variable['type'] == 'struct stack*') {
+                let stackNodeDetails = render_stack({ 'addr': safe_mem_access(variable['addr']) })
+                ReturnData['Pointing_To'].push(stackNodeDetails[0])
+                ReturnData['Connects'].push([ReturnData['Pointer_Node'], stackNodeDetails[0], 4, 0.5 - (0.57) / (stackNodeDetails[1] + 0.5)], ...stackNodeDetails[3]);
+            }
+            else if (variable['type'] == 'struct queue*') {
+                let queueNodeDetails = render_queue({ 'addr': safe_mem_access(variable['addr']) })
+                ReturnData['Pointing_To'].push(queueNodeDetails[0])
+                ReturnData['Connects'].push([ReturnData['Pointer_Node'], queueNodeDetails[0], 4, 0.37], ...queueNodeDetails[3]);
+            }
+            else if (variable['type'] == 'struct sll*') {
+                let cycle = detect_sll_cycle(safe_mem_access(variable['addr']));
+                // console.log(cycle)
+                if (cycle['cycle_exists'] == true) {
+                    let last = ReturnData['Pointer_Node']
+                    ReturnData['Extra_Height'] += 60;
+                    for (let i = 0; i < cycle['cells'].length; i++) {
+                        let sllNodeDetails = render_sll({ 'addr': cycle['cells'][i] })
+                        ReturnData['Pointing_To'].push(sllNodeDetails[0])
+                        ReturnData['Connects'].push([last, sllNodeDetails[0], 2, 0])
+                        last = sllNodeDetails[0]
+                    }
+                    ReturnData['Connects'].push([last, ReturnData['Pointing_To'][cycle['cycle_index']], 2, 3, [["S20px", 0], ["S20px", 2], [1, 2]]])
+                } else {
+                    let last = ReturnData['Pointer_Node']
+                    for (let i = 0; i < cycle['cells'].length - 1; i++) {
+                        let sllNodeDetails = render_sll({ 'addr': cycle['cells'][i] })
+                        ReturnData['Pointing_To'].push(sllNodeDetails[0])
+                        ReturnData['Connects'].push([last, sllNodeDetails[0], 2, 0])
+                        last = sllNodeDetails[0]
+                    }
+                    ReturnData['Pointing_To'].push(makeValidInnerRepresentNode(NULL))
+                    ReturnData['Connects'].push([last, _top(ReturnData['Pointing_To']), 2, -0.333])
+                }
+                ReturnData['Connects'][0][3] = 0.125
+            }
+            else if (variable['type'] === 'struct dll*') {
+                let cycle = detect_dll_cycle(safe_mem_access(variable['addr']));
+                // console.log(cycle)
+                if (cycle['cycle_exists'] == true) {
+                    let last = ReturnData['Pointer_Node']
+                    ReturnData['Extra_Height'] += 60;
+                    for (let i = 0; i < cycle['cells'].length; i++) {
+                        let dllNodeDetails = render_dll({ 'addr': cycle['cells'][i] })
+                        ReturnData['Pointing_To'].push(dllNodeDetails[0])
+                        ReturnData['Connects'].push([last, dllNodeDetails[0], 1.833, 0.167])
+                        if (i != 0) {
+                            ReturnData['Connects'].push([dllNodeDetails[0], last, -0.167, 2.167])
+                        }
+                        last = dllNodeDetails[0]
+                    }
+                    ReturnData['Connects'].push([last, ReturnData['Pointing_To'][cycle['cycle_index']], 1.833,-0.05, [["S33px", 0], ["S33px", "S90px"], ["E-25px", "S90px"], ["E-25px", 1]]])
+                    ReturnData['Connects'].push([ReturnData['Pointing_To'][cycle['cycle_index']], last,-0.167, 2.167, [["S-17px", 0], ["S-17px", "E50px"], ["E25px", "E50px"], ["E25px", 1]]])
+                } else {
+                    let last = ReturnData['Pointer_Node']
+                    ReturnData['Extra_Height'] = 0;
+                    for (let i = 0; i < cycle['cells'].length-1; i++) {
+                        let dllNodeDetails = render_dll({ 'addr': cycle['cells'][i] })
+                        ReturnData['Pointing_To'].push(dllNodeDetails[0])
+                        ReturnData['Connects'].push([last, dllNodeDetails[0], 1.833, 0.167])
+                        if (i != 0) {
+                            ReturnData['Connects'].push([dllNodeDetails[0], last, -0.167, 2.167])
+                        }
+                        last = dllNodeDetails[0]
+                    }
+                    if(safe_mem_access(_top(cycle['cells']))==NULL){
+                        let nullNode=makeValidInnerRepresentNode(safe_mem_access(_top(cycle['cells'])))
+                        ReturnData['Pointing_To'].push(nullNode)
+                        ReturnData['Connects'].push([last, nullNode, 1.833, -0.05])
+                    }else{
+                        let disconnectedNode=render_dll({'addr':_top(cycle['cells'])})
+                        ReturnData['Pointing_To'].push(disconnectedNode[0])
+                        ReturnData['Connects'].push([last, disconnectedNode[0], 1.833, 0.167])
+                    }
+                }
+                ReturnData['Connects'][0][2] = 2
+                ReturnData['Connects'][0][3] = 0.125
+            }
+            return ReturnData
+        }
         let render_primitive = function (variable) {
             let varNode = makeOuterRepresentNode()
             maketable(varNode, 2, 1);
@@ -3358,7 +3057,7 @@ function render_Variables() {
                 innerNode.textContent = variable['name']
                 setCell(varNode, innerNode, 1, 0)
             }
-            return [varNode, 2, 1]
+            return [varNode, 1, 1]
             // setCell(representDiv, varNode, row, col)
         }
         for (let i = 0; i < Variables.length; i++) {
@@ -3368,13 +3067,7 @@ function render_Variables() {
             }
             if (temp['scope'] != scope) {
                 scope = temp['scope']
-                if (col_num != 0) {
-                    insertRow();
-                    row_num++
-                }
-                insertRow();
-                row_num++;
-                col_num = 0;
+                nextRow();
             }
             // let varNode = makeOuterRepresentNode()
             if (temp['type'] == 'int' ||
@@ -3383,82 +3076,80 @@ function render_Variables() {
             ) {
                 let varNodeDetails = render_primitive(temp)
                 let varNode = varNodeDetails[0]
-                setCell(representDiv, varNode, row_num, col_num)
-                col_num++;
-                if (col_num == 6) {
-                    row_num++;
-                    insertRow();
-                    col_num = 0;
-                }
+                setAtCoords(varNode)
             }
             else if (temp['type']['dtype'] !== undefined) {
-                if (col_num != 0) {
-                    col_num = 0;
-                    row_num++;
-                    insertRow();
-                }
+                nextRow();
                 let varNodeDetails = render_array(temp)
                 let varNode = varNodeDetails[0]
-                setCell(representDiv, varNode, row_num, col_num)
-                row_num += varNodeDetails[1];
-                for (let j = 0; j < varNodeDetails[1]; j++) {
-                    insertRow();
-                }
-                col_num = 0;
+                setAtCoords(varNode)
+                nextRow();
                 arrows.push(...varNodeDetails[3]);
-                // for(let j=0 ; j < varNodeDetails[3].length; j++){
-                //     drawArrow(...varNodeDetails[3][j])
-                // }
             }
             else if (temp['type'].indexOf('**') != -1) {
 
             }
             else if (temp['type'].indexOf('*') != -1) {
+                nextRow();
+                let varNodeDetails = render_pointer(temp);
+                let varNode = varNodeDetails['Outer_Node']
+                setAtCoords(varNode)
+                for (let j = 0; j < varNodeDetails['Pointing_To'].length; j++) {
+                    appendingLoc[0] += 90;
+                    setAtCoords(varNodeDetails['Pointing_To'][j], true)
+                }
 
+                appendingLoc[1] += varNodeDetails['Extra_Height']
+                nextRow();
+                arrows.push(...varNodeDetails['Connects'])
             }
             else if (temp['type'] == "struct stack") {
-                if (col_num != 0) {
-                    col_num = 0;
-                    row_num++;
-                    insertRow();
-                }
+                nextRow();
                 let varNodeDetails = render_stack(temp)
                 let varNode = varNodeDetails[0]
-                setCell(representDiv, varNode, row_num, col_num)
-                row_num += varNodeDetails[1];
-                for (let j = 0; j < varNodeDetails[1]; j++) {
-                    insertRow();
-                }
-                col_num = 0;
+                setAtCoords(varNode)
+                nextRow();
                 arrows.push(...varNodeDetails[3]);
             }
             else if (temp['type'] == "struct queue") {
-                if (col_num != 0) {
-                    col_num = 0;
-                    row_num++;
-                    insertRow();
-                }
+                nextRow();
                 let varNodeDetails = render_queue(temp)
                 let varNode = varNodeDetails[0]
-                setCell(representDiv, varNode, row_num, col_num)
-                row_num += varNodeDetails[1];
-                for (let j = 0; j < varNodeDetails[1]; j++) {
-                    insertRow();
-                }
-                col_num = 0;
+                setAtCoords(varNode)
+                nextRow();
                 arrows.push(...varNodeDetails[3]);
             }
             else if (temp['type'] == "struct sll") {
+                nextRow();
+                let varNodeDetails = render_sll(temp, true)
+                let varNode = varNodeDetails[0]
+                setAtCoords(varNode)
+                nextRow();
             }
             else if (temp['type'] == "struct dll") {
+                nextRow();
+                let varNodeDetails = render_dll(temp, true)
+                let varNode = varNodeDetails[0]
+                setAtCoords(varNode);
+                nextRow();
             }
             else if (temp['type'] == "struct tree") {
+                nextRow();
+                let varNodeDetails = render_tree(temp, true)
+                let varNode = varNodeDetails[0]
+                setAtCoords(varNode);
+                nextRow();
             }
         }
+        //after global variable setting
         for (let j = 0; j < arrows.length; j++) {
             drawArrow(...arrows[j])
         }
         //for the global variables
+
+        positioningDiv.appendChild(svgElement)
+        representDiv.scrollTop = scrollAmount[0]
+        representDiv.scrollLeft = scrollAmount[1]
     }
 }
 function render_Memory() {
@@ -3510,7 +3201,7 @@ function render_Memory() {
                     innerNode.textContent = unwrapped_memory[Object.keys(unwrapped_memory)[j]]
                     setCell(varNode, innerNode, 0, j)
                 }
-                innerNode = document.createElement('p')
+                let innerNode = document.createElement('p')
                 innerNode.textContent = i
                 setCell(varNode, innerNode, 1, 0)
                 addRow()
@@ -3580,9 +3271,6 @@ function is_var_declaration(tokens) {
     }
     return res
 }
-// function MergeCells(table, start_row, end_row, start_col, end_col) {
-
-// }
 function syntaxCorrection() {
     debugger
     let val = document.getElementById('Cin').value.split('\n')
@@ -3647,53 +3335,54 @@ function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0, extra_joint
     const toRect = toElement.getBoundingClientRect();
     const representDivRect = representDiv.getBoundingClientRect();
     let startX = 0, startY = 0, endX = 0, endY = 0;
-    switch (fromEdge) {
-        case 0:
-            startX = fromRect.left - representDivRect.left;
-            startY = fromRect.top - representDivRect.top + fromRect.height / 2;
-            break;
-        case 1:
-            startX = fromRect.left - representDivRect.left + fromRect.width / 2;
-            startY = fromRect.top - representDivRect.top;
-            break;
-        case 2:
-            startX = fromRect.right - representDivRect.left;
-            startY = fromRect.top - representDivRect.top + fromRect.height / 2;
-            break;
-        case 3:
-            startX = fromRect.left - representDivRect.left + fromRect.width / 2;
-            startY = fromRect.bottom - representDivRect.top;
-            break;
-        case 4:
-            startX = fromRect.left - representDivRect.left + fromRect.width / 2;
-            startY = fromRect.top - representDivRect.top + fromRect.height / 2;
-            break;
+    function edge_calc(edge_Value, elemRect) {
+        if (edge_Value == 4) {
+            let X = elemRect.left - representDivRect.left + elemRect.width / 2;
+            let Y = elemRect.top - representDivRect.top + elemRect.height / 2;
+            return { 'X': X, 'Y': Y };
+        }
+        if (edge_Value > 3.5) {
+            edge_Value -= 4;
+        }
+        if (edge_Value < 0.5) {
+            let normal = 1 - (edge_Value + 0.5);
+            let X = elemRect.left - representDivRect.left;
+            let Y = elemRect.top - representDivRect.top + elemRect.height * normal;
+            return { 'X': X, 'Y': Y };
+        }
+        else if (edge_Value < 1.5) {
+            let normal = edge_Value - 0.5;
+            let X = elemRect.left - representDivRect.left + elemRect.width * normal;
+            let Y = elemRect.top - representDivRect.top;
+            return { 'X': X, 'Y': Y };
+        }
+        else if (edge_Value < 2.5) {
+            let normal = edge_Value - 1.5;
+            let X = elemRect.right - representDivRect.left;
+            let Y = elemRect.top - representDivRect.top + elemRect.height * normal;
+            return { 'X': X, 'Y': Y };
+        }
+        else if (edge_Value < 3.5) {
+            let normal = 1 - (edge_Value - 2.5);
+            let X = elemRect.left - representDivRect.left + elemRect.width * normal;
+            let Y = elemRect.bottom - representDivRect.top;
+            return { 'X': X, 'Y': Y };
+        }
+
     }
-    switch (toEdge) {
-        case 0:
-            endX = toRect.left - representDivRect.left;
-            endY = toRect.top - representDivRect.top + toRect.height / 2;
-            break;
-        case 1:
-            endX = toRect.left - representDivRect.left + toRect.width / 2;
-            endY = toRect.top - representDivRect.top;
-            break;
-        case 2:
-            endX = toRect.right - representDivRect.left;
-            endY = toRect.top - representDivRect.top + toRect.height / 2;
-            break;
-        case 3:
-            endX = toRect.left - representDivRect.left + toRect.width / 2;
-            endY = toRect.bottom - representDivRect.top;
-            break;
-        case 4:
-            endX = toRect.left - representDivRect.left + toRect.width / 2;
-            endY = toRect.top - representDivRect.top + toRect.height / 2;
-            break;
+    startX = edge_calc(fromEdge, fromRect)['X']
+    startY = edge_calc(fromEdge, fromRect)['Y']
+    endX = edge_calc(toEdge, toRect)['X']
+    endY = edge_calc(toEdge, toRect)['Y']
+    endY += representDiv.scrollTop
+    // console.log(representDiv)
+    startY += representDiv.scrollTop
+    if (Number(svgElement.style.height.slice(0, -2)) < representDiv.scrollHeight) {
+        svgElement.style.height = representDiv.scrollHeight+'px';
     }
-    // const endX = toRect.left - representDivRect.left;
-    // const endY = toRect.top - representDivRect.top + toRect.height / 2;
-    svgElement.style.height = representDiv.scrollHeight;
+    if (Number(svgElement.style.width.slice(0, -2)) < representDiv.scrollWidth) {
+        svgElement.style.width = representDiv.scrollWidth+'px';
+    }
     let draw_line = function (start_X, start_Y, end_X, end_Y) {
         const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
         arrow.setAttribute("x1", start_X);
@@ -3703,14 +3392,45 @@ function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0, extra_joint
         arrow.setAttribute("stroke", "black");
         arrow.setAttribute("stroke-width", "2");
         arrow.style.zIndex = 4;
+        let max_coords = [start_X, start_Y]
+        if (start_X < endX) {
+            max_coords[0] = endX;
+        }
+        if (start_Y < endY) {
+            max_coords[1] = endY;
+        }
+        if (Number(svgElement.style.height.slice(0, -2)) < max_coords[1]) {
+            svgElement.style.height = max_coords[1] + 5 + 'px';
+        }
+        if (Number(svgElement.style.width.slice(0, -2)) < max_coords[0]) {
+            svgElement.style.width = max_coords[0] + 5 + 'px';
+        }
         svgElement.appendChild(arrow);
         return arrow;
     }
     let calc_joint_coordinates = function (joint) {
         let X1 = startX, X2 = endX, X;
         let Y1 = startY, Y2 = endY, Y;
-        X = X1 + (X2 - X1) * joint[0];
-        Y = Y1 + (Y2 - Y1) * joint[1];
+        function process_coordinate(P1, P2, num) {
+            if (isNaN(Number(num))) {
+                if (typeof (num) == "string") {
+                    if (num[0] == 'S' && num.slice(-2) == 'px') {
+                        return P1 + Number(num.slice(1, -2))
+                    }
+                    if (num[0] == 'E' && num.slice(-2) == 'px') {
+                        return P1 + (P2 - P1) + Number(num.slice(1, -2))
+                    }
+                    else if (num.slice(-2) == 'px') {
+                        return Number(num.slice(0, -2));
+                    }
+                }
+            }
+            else {
+                return P1 + (P2 - P1) * Number(num);
+            }
+        }
+        X = process_coordinate(X1, X2, joint[0]);
+        Y = process_coordinate(Y1, Y2, joint[1]);
         return [X, Y]
     }
     if (extra_joints.length === 0) {
@@ -3771,13 +3491,13 @@ function handleKey(e) {
         e.preventDefault();
         this.focus();
         // console.log(typeof(this.value))
-        tab_index = this.selectionStart
+        let tab_index = this.selectionStart
         this.value = this.value.slice(0, tab_index) + '\t' + this.value.slice(tab_index)
         this.selectionStart = tab_index + 1
         this.selectionEnd = tab_index + 1
     }
-    main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
-    sel_index = this.selectionStart
+    const main_function_outline = /^(.*\n)*int main\(\){(.|\n)*\n\treturn 0;\n}\s*$/
+    const sel_index = this.selectionStart
     setTimeout(() => {
         if (!main_function_outline.test(this.value)) {
             // e.preventDefault();
@@ -3823,10 +3543,10 @@ svgElement.setAttribute("id", "arrow-svg")
 svgElement.style.width = "100%"
 svgElement.style.minHeight = "100%"
 svgElement.style.height = "auto"
-svgElement.setAttribute("position", "relative")
-svgElement.setAttribute("top", "0px")
-svgElement.setAttribute("left", "0px")
-svgElement.style.zIndex = 3;
+svgElement.style.position = "absolute"
+svgElement.style.top = "0px"
+svgElement.style.left = "0px"
+svgElement.style.zIndex = 4;
 const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
 marker.setAttribute("id", "arrowhead");
 marker.setAttribute("markerWidth", "10");
