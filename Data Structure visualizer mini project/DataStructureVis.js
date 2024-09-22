@@ -107,3 +107,14 @@ sleepTimeSlider.addEventListener("input", function () {
     let color = `linear-gradient(90deg, red ${percentage}%, white ${percentage}%)`;
     sleepTimeSlider.style.background = color;
 });
+let PauseButton=document.querySelector(".pause-button");
+
+function Pauseexecution(){
+    if(PAUSE_EXEC==true){
+        PAUSE_EXEC=false;
+        PauseButton.value="Pause";
+    }else{
+        PAUSE_EXEC=true;    
+        PauseButton.value="Resume";
+    }
+}
