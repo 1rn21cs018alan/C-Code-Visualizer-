@@ -1,0 +1,130 @@
+.sidebar {
+  position: absolute;
+  background-color: #707070;
+  top: 0;
+  height: 107vh;
+  width: 300px;
+  z-index: 1;
+}
+
+.input-fields {
+  padding: 1px 10px;
+  margin: 3px 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  width: 100%;
+  z-index: 2;
+}
+
+.cin-tag {
+  height: 397px;
+  width: 92%;
+  /* padding: 60px 13px; */
+  display: flex;
+  justify-content: space-evenly;
+  margin-right: 29px;
+  z-index: 3;
+  /* align-items: center; */
+}
+
+.cout-tag {
+  height: 214px;
+  width: 186%;
+  padding: 6px 28px;
+  display: flex;
+  justify-content: space-evenly;
+  margin-right: 30px;
+  z-index: 3;
+  /* align-items: center; */
+}
+
+textarea {
+  padding: 12px 12px;
+  border-radius: 20px;
+  box-sizing: border-box;
+  border: 2px solid black;
+  background-color: #B0B0B0;
+  width: 250px;
+  height: 118%;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+}
+
+#Cin {
+  padding: 12px 12px;
+  border-radius: 2px;
+  box-sizing: border-box;
+  border: 2px solid black;
+  background-color: #B0B0B0;
+  width: 271px;
+  height: 100%;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+}
+
+.compile-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 7px 27px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 16px;
+  display: block;
+  margin-left: 80px;
+  margin-right: auto;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 7;
+}
+
+.compile-button:hover {
+  background-color: #b36200;
+  cursor: pointer;
+}
+
+#Cin1,
+#Cin2,
+#Cin3 {
+  display: block;
+  font-family: "Noto Sans Mono", monospace;
+
+}
+
+/* #Cin4 {
+  display: inline-block;
+  white-space: pre;
+} */
+
+/* .tab {
+  display: inline-block;
+  width: 2em;
+  Width for the tab space, adjust if needed
+}
+
+.tab_space {
+  display: inline-block;
+   width: 2em;
+  white-space: pre;
+  background-color: #b36200;
+} */
+
+.editor_line {
+  display:block;
+  background-color: rgb(188, 231, 235);
+  font-family: "Noto Sans Mono", monospace;
+  white-space:pre-wrap;
+  border-bottom: 1px solid transparent;
+  cursor:text;
+}
+.editor_line:focus {
+  outline: none; 
+  border-bottom: 1px solid #007bff; 
+}

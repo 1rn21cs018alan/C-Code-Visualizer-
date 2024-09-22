@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="test.css">
+    <script>
+        function makeNode(address,value){
+            let div=document.createElement("div");
+            div.className="Node"
+            div.style.width = "max-content";
+            div.style.height = "30px";
+            div.style.background = "red";
+            div.style.color = "white";
+            div.style.borderRadius = "3px";
+            div.style.borderWidth = "3px";
+            div.style.borderColor = "black";
+            div.style.margin="2px"
+            div.style.paddingLeft="2px"
+
+            div.innerHTML = address+"|"+value;
+            document.body.appendChild(div)
+            return div
+        }
+    </script>
+    <script src="index.js"></script>
+    <!-- <script src="test.js"></script> -->
+</head>
+<body>
+    <div class="sidebar">
+        <div class="input-fields">
+          <input type="button" class="compile-button" value="Compile" onclick=compile()>
+          <div class="cin-tag">
+            <div name="Cin" id="Cin" contenteditable="false">
+              <span id="Cin1" class="editor_line" contenteditable="false">int main(){</span>
+              <span id="Cin2" class="editor_line" contenteditable="false">&Tab;return 0;</span>
+              <span id="Cin3" class="editor_line" contenteditable="false">}</span>
+              <!-- <span id="Cin4" contenteditable="false">HEHE</span> -->
+          </div>
+          
+          </div>
+          <div class="cout-tag">
+            <textarea name="Cout" id="Cout"></textarea>
+          </div>
+        </div>
+      </div>
+      <script src="test.js"></script>
+</body>
+</html>
