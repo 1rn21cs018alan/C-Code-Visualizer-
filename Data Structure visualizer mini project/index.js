@@ -19,6 +19,7 @@ async function interpret(function_start_pointer, scope = 1) {
         while (PAUSE_EXEC) {
             await sleep(300);
         }
+        extra_render_data = {};
         if (is_var_declaration(tokens)['is_var']) {
             let var_type = is_var_declaration(tokens)['type']
             let var_names = [[]]
@@ -680,7 +681,7 @@ function evaluate(tokens, scope) {
                         temp_res['value'] = TypeCastFloat(temp_res) + 1
                     }
                     else {
-                        temp_res['value'] = temp_res['value'] + size_of(op1['type'])
+                        temp_res['value'] = temp_res['value'] + size_of(op1['type'].slice(0, -1))
                     }
                     setVariableData(op1, temp_res['value'])
                 }
@@ -725,7 +726,7 @@ function evaluate(tokens, scope) {
                         temp_res['value'] = TypeCastFloat(temp_res) - 1
                     }
                     else {
-                        temp_res['value'] = temp_res['value'] - size_of(op1['type'])
+                        temp_res['value'] = temp_res['value'] - size_of(op1['type'].slice(0, -1))
                     }
                     setVariableData(op1, temp_res['value'])
                 }
@@ -884,7 +885,7 @@ function evaluate(tokens, scope) {
                         setVariableData(op1, TypeCastFloat(temp_res) + 1)
                     }
                     else {
-                        setVariableData(op1, temp_res['value'] + size_of(op1['type']))
+                        setVariableData(op1, temp_res['value'] + size_of(op1['type'].slice(0, -1)))
                     }
                 }
                 postfix_stack.push(temp_res)
@@ -904,7 +905,7 @@ function evaluate(tokens, scope) {
                         setVariableData(op1, TypeCastFloat(temp_res) - 1)
                     }
                     else {
-                        setVariableData(op1, temp_res['value'] - size_of(op1['type']))
+                        setVariableData(op1, temp_res['value'] - size_of(op1['type'].slice(0, -1)))
                     }
                 }
                 postfix_stack.push(temp_res)
@@ -1690,10 +1691,12 @@ function TypeCastFloat(value) {
 function TypeCastChar(value) {
     if (value['type'] == "float") {
         // return String.fromCharCode(TypeCastInt(value['value']) % 256)
-        return String.fromCharCode(TypeCastInt(value) % 256)
+        // return String.fromCharCode(TypeCastInt(value) % 256)
+        return TypeCastInt(value) % 256
     }
     else if (value['type'] == "int") {
-        return String.fromCharCode((value['value']) % 256)
+        // return String.fromCharCode((value['value']) % 256)
+        return (value['value']) % 256
     }
     else if (value['type'] == "char") {
         return value['value'];
@@ -2073,7 +2076,7 @@ function lineLexer(text) {
                         // console.log(temp)
                         temp = JSON.parse(`"${temp.slice(1, -1)}"`)
                     }
-                    tokens.push({ 'value': temp, 'type': 'char' })
+                    tokens.push({ 'value': temp.charCodeAt(), 'type': 'char' })
                     temp = ""
                 }
             }
@@ -2490,8 +2493,8 @@ function render_Variables() {
         let scrollAmount = [representDiv.scrollTop, representDiv.scrollLeft]
         representDiv.innerHTML = ""
         svgElement.innerHTML = ""
-        svgElement.style.height="0px"
-        svgElement.style.width="0px"
+        svgElement.style.height = "0px"
+        svgElement.style.width = "0px"
         // svgElement.style.height = "0px";
         svgElement.appendChild(marker)
         const positioningDiv = document.createElement('div')
@@ -2559,7 +2562,7 @@ function render_Variables() {
             while (traversed_cells.indexOf(curr) == -1 && curr != NULL) {
                 traversed_cells.push(curr)
                 curr = safe_mem_access(curr)
-                if (curr!=NULL && safe_mem_access(curr + 8) != _top(traversed_cells)) {
+                if (curr != NULL && safe_mem_access(curr + 8) != _top(traversed_cells)) {
                     traversed_cells.push(curr)
                     break
                 }
@@ -2574,7 +2577,149 @@ function render_Variables() {
             }
         }
         let arrangeTree = function (addr) {
-            
+            function expandingNode(root_addr, operations) {
+                let node = makeInnerRepresentNode();
+                node.style.backgroundColor = "#c500cc";
+                node.style.borderColor = "#4c005e";
+                node.style.textAlign = "center";
+                node.textContent = "o o o"
+                node.style.height = '30px'
+                node.style.position = 'absolute'
+                node.setAttribute("root_addr", root_addr);
+                node.setAttribute("operations", operations);
+                node.onclick = function () {
+                    // console.log(this)
+                    let addr = this.getAttribute('root_addr')
+                    let path = this.getAttribute('operations')
+                    extra_render_data[addr] = { 'path': path }
+                    render_Variables();
+                }
+                return node;
+            }
+            function dfs_to(addr, levels = 3, path = '') {
+                if (safe_mem_access(addr) == NULL) {
+                    return NULL;
+                }
+                if (levels == 0) {
+                    if (extra_render_data[addr] != undefined && extra_render_data[addr]['path'].slice(0, path.length) == path) {
+                        let root = { 'addr': addr, 'left': NULL, 'right': NULL }
+                        root['left'] = dfs_to(safe_mem_access(addr), 3, path + 'l')
+                        root['right'] = dfs_to(safe_mem_access(addr + 8), 3, path + 'r')
+                        return root
+                    }
+                    else {
+                        return expandingNode(addr, path)
+                    }
+                }
+                let root = { 'addr': addr, 'left': NULL, 'right': NULL }
+                root['left'] = dfs_to(safe_mem_access(addr), levels - 1, path + 'l')
+                root['right'] = dfs_to(safe_mem_access(addr + 8), levels - 1, path + 'r')
+                return root
+
+            }
+            function childNodeSize(parentElement) {
+                let left = parentElement['left']
+                let right = parentElement['right']
+                let parent_x = 221, parent_y = 86
+                let NULL_y = 51, expNode_y = 39, NULL_x = 65
+                let C_pad = 15, P_pad = 45;
+                let sizes = { 'left_x': 0, 'left_y': 0, 'right_x': 0, 'right_y': 0, 'total_x': 0, 'total_y': 0 }
+                function recursive_addition(child, x, y) {
+                    if (child == NULL || child['textContent'] != undefined) {
+                        return false
+                    }
+                    if (child['pos_x'] == undefined) {
+                        child['pos_x'] = 0
+                    }
+                    child['pos_x'] += x
+                    if (child['pos_y'] == undefined) {
+                        child['pos_y'] = 0
+                    }
+                    child['pos_y'] += y
+                    if (!recursive_addition(child['left'], x, y)) {
+                        if (child['left_x'] == undefined) {
+                            child['left_x'] = 0
+                        }
+                        child['left_x'] += x
+                        if (child['left_y'] == undefined) {
+                            child['left_y'] = 0
+                        }
+                        child['left_y'] += y
+                    }
+                    if (!recursive_addition(child['right'], x, y)) {
+                        if (child['right_x'] == undefined) {
+                            child['right_x'] = 0
+                        }
+                        child['right_x'] += x
+                        if (child['right_y'] == undefined) {
+                            child['right_y'] = 0
+                        }
+                        child['right_y'] += y
+                    }
+                    return true
+                }
+                if (left == NULL || left['textContent'] != undefined) {
+                    sizes['left_x'] = NULL_x
+                    sizes['left_y'] = NULL_y
+                    if (left != NULL) {
+                        sizes['left_y'] = expNode_y
+                    }
+                }
+                else {
+                    let temp = childNodeSize(left)
+                    sizes['left_x'] = temp['total_x']
+                    sizes['left_y'] = temp['total_y']
+                }
+                if (right == NULL || right['textContent'] != undefined) {
+                    sizes['right_x'] = NULL_x
+                    sizes['right_y'] = NULL_y
+                    if (right != NULL) {
+                        sizes['right_y'] = expNode_y
+                    }
+                }
+                else {
+                    let temp = childNodeSize(right)
+                    sizes['right_x'] = temp['total_x']
+                    sizes['right_y'] = temp['total_y']
+                }
+                if (sizes['left_x'] + sizes['right_x'] + C_pad < parent_x) {
+                    C_pad = parent_x - sizes['left_x'] - sizes['right_x']
+                    sizes['total_x'] = parent_x
+                }
+                else {
+                    sizes['total_x'] = sizes['left_x'] + sizes['right_x'] + C_pad
+                }
+                sizes['total_y'] = parent_y + P_pad
+                if (sizes['left_y'] > sizes['right_y']) {
+                    sizes['total_y'] += sizes['left_y']
+                }
+                else {
+                    sizes['total_y'] += sizes['right_y']
+                }
+                // correct child node position
+                sizes['right_x'] = sizes['left_x'] + C_pad
+                parentElement['pos_y'] = 0
+                parentElement['pos_x'] = Math.floor((sizes['total_x'] - parent_x) / 2)
+                if (left == NULL || left['textContent'] != undefined) {
+                    parentElement['left_x'] = 0
+                    parentElement['left_y'] = parent_y + P_pad
+                }
+                if (right == NULL || right['textContent'] != undefined) {
+                    parentElement['right_x'] = sizes['left_x'] + C_pad
+                    parentElement['right_y'] = parent_y + P_pad
+                }
+                recursive_addition(parentElement['left'], 0, parent_y + P_pad)
+                recursive_addition(parentElement['right'], sizes['left_x'] + C_pad, parent_y + P_pad)
+                sizes['left_x'] = 0
+                sizes['right_y'] = sizes['left_y'] = parent_y + P_pad
+                return sizes
+            }
+            let root_node = dfs_to(safe_mem_access(addr))
+            childNodeSize(root_node)
+            console.log(root_node)
+            // root_node = dfs_to(safe_mem_access(addr))
+            // console.log(root_node)
+            return root_node
         }
         // insertRow();
         let safe_mem_access = function (mem_loc) {
@@ -3017,12 +3162,12 @@ function render_Variables() {
                         }
                         last = dllNodeDetails[0]
                     }
-                    ReturnData['Connects'].push([last, ReturnData['Pointing_To'][cycle['cycle_index']], 1.833,-0.05, [["S33px", 0], ["S33px", "S90px"], ["E-25px", "S90px"], ["E-25px", 1]]])
-                    ReturnData['Connects'].push([ReturnData['Pointing_To'][cycle['cycle_index']], last,-0.167, 2.167, [["S-17px", 0], ["S-17px", "E50px"], ["E25px", "E50px"], ["E25px", 1]]])
+                    ReturnData['Connects'].push([last, ReturnData['Pointing_To'][cycle['cycle_index']], 1.833, -0.05, [["S33px", 0], ["S33px", "S90px"], ["E-25px", "S90px"], ["E-25px", 1]]])
+                    ReturnData['Connects'].push([ReturnData['Pointing_To'][cycle['cycle_index']], last, -0.167, 2.167, [["S-17px", 0], ["S-17px", "E50px"], ["E25px", "E50px"], ["E25px", 1]]])
                 } else {
                     let last = ReturnData['Pointer_Node']
                     ReturnData['Extra_Height'] = 0;
-                    for (let i = 0; i < cycle['cells'].length-1; i++) {
+                    for (let i = 0; i < cycle['cells'].length - 1; i++) {
                         let dllNodeDetails = render_dll({ 'addr': cycle['cells'][i] })
                         ReturnData['Pointing_To'].push(dllNodeDetails[0])
                         ReturnData['Connects'].push([last, dllNodeDetails[0], 1.833, 0.167])
@@ -3031,12 +3176,12 @@ function render_Variables() {
                         }
                         last = dllNodeDetails[0]
                     }
-                    if(safe_mem_access(_top(cycle['cells']))==NULL){
-                        let nullNode=makeValidInnerRepresentNode(safe_mem_access(_top(cycle['cells'])))
+                    if (safe_mem_access(_top(cycle['cells'])) == NULL) {
+                        let nullNode = makeValidInnerRepresentNode(safe_mem_access(_top(cycle['cells'])))
                         ReturnData['Pointing_To'].push(nullNode)
                         ReturnData['Connects'].push([last, nullNode, 1.833, -0.05])
-                    }else{
-                        let disconnectedNode=render_dll({'addr':_top(cycle['cells'])})
+                    } else {
+                        let disconnectedNode = render_dll({ 'addr': _top(cycle['cells']) })
                         ReturnData['Pointing_To'].push(disconnectedNode[0])
                         ReturnData['Connects'].push([last, disconnectedNode[0], 1.833, 0.167])
                     }
@@ -3044,13 +3189,59 @@ function render_Variables() {
                 ReturnData['Connects'][0][2] = 2
                 ReturnData['Connects'][0][3] = 0.125
             }
+            else if (variable['type'] === 'struct tree*') {
+                let tree_to_render = arrangeTree(variable['addr'])
+                ReturnData['Pointing_at'] = []
+                function tree_to_array(root) {
+                    let elem_index = ReturnData['Pointing_at'].length;
+                    ReturnData['Pointing_To'].push(render_tree({ 'addr': root['addr'] })[0])
+                    ReturnData['Pointing_at'].push({ 'X': root['pos_x'], 'Y': root['pos_y'] })
+                    let left = root['left']
+                    let right = root['right']
+                    let left_ind = -1
+                    let right_ind = -1
+                    if (left == NULL || left['textContent'] != undefined) {
+                        left_ind = ReturnData['Pointing_at'].length
+                        if (left == NULL) {
+                            ReturnData['Pointing_To'].push(makeValidInnerRepresentNode(NULL))
+                        } else {
+                            ReturnData['Pointing_To'].push(left)
+                        }
+                        ReturnData['Pointing_at'].push({ 'X': root['left_x'], 'Y': root['left_y'] })
+                    } else {
+                        left_ind = tree_to_array(left)
+                    }
+                    if (right == NULL || right['textContent'] != undefined) {
+                        right_ind = ReturnData['Pointing_at'].length
+                        if (right == NULL) {
+                            ReturnData['Pointing_To'].push(makeValidInnerRepresentNode(NULL))
+                        } else {
+                            ReturnData['Pointing_To'].push(right)
+                        }
+                        ReturnData['Pointing_at'].push({ 'X': root['right_x'], 'Y': root['right_y'] })
+                    } else {
+                        right_ind = tree_to_array(right)
+                    }
+                    ReturnData['Connects'].push([ReturnData['Pointing_To'][elem_index], ReturnData['Pointing_To'][left_ind], 3.25, 1])
+                    ReturnData['Connects'].push([ReturnData['Pointing_To'][elem_index], ReturnData['Pointing_To'][right_ind], 2.75, 1])
+                    return elem_index
+                }
+                tree_to_array(tree_to_render)
+                ReturnData['Connects'].push([ReturnData['Pointer_Node'], ReturnData['Pointing_To'][0], 2, 0.12])
+                // ReturnData['Pointing_To'].push()
+            }
+
             return ReturnData
         }
         let render_primitive = function (variable) {
             let varNode = makeOuterRepresentNode()
             maketable(varNode, 2, 1);
             let innerNode = makeInnerRepresentNode()
-            innerNode.textContent = getVariableData(variable)
+            let val = getVariableData(variable)
+            innerNode.textContent = val
+            if (variable['type'] == 'char') {
+                innerNode.textContent = '\'' + String.fromCharCode(val) + '\''
+            }
             setCell(varNode, innerNode, 0, 0)
             if (variable['name'] !== undefined) {
                 innerNode = document.createElement('p')
@@ -3094,9 +3285,21 @@ function render_Variables() {
                 let varNodeDetails = render_pointer(temp);
                 let varNode = varNodeDetails['Outer_Node']
                 setAtCoords(varNode)
-                for (let j = 0; j < varNodeDetails['Pointing_To'].length; j++) {
-                    appendingLoc[0] += 90;
-                    setAtCoords(varNodeDetails['Pointing_To'][j], true)
+                if (varNodeDetails['Pointing_at'] != undefined) {
+                    let initalLoc = [...appendingLoc]
+                    console.log(initalLoc)
+                    for (let j = 0; j < varNodeDetails['Pointing_To'].length; j++) {
+                        appendingLoc[0] = initalLoc[0] + varNodeDetails['Pointing_at'][j]['X'];
+                        appendingLoc[1] = initalLoc[1] + varNodeDetails['Pointing_at'][j]['Y'];
+                        console.log([...appendingLoc], varNodeDetails['Pointing_at'][j])
+                        setAtCoords(varNodeDetails['Pointing_To'][j], true)
+                    }
+                }
+                else {
+                    for (let j = 0; j < varNodeDetails['Pointing_To'].length; j++) {
+                        appendingLoc[0] += 90;
+                        setAtCoords(varNodeDetails['Pointing_To'][j], true)
+                    }
                 }
 
                 appendingLoc[1] += varNodeDetails['Extra_Height']
@@ -3378,10 +3581,10 @@ function drawArrow(fromElement, toElement, fromEdge = 2, toEdge = 0, extra_joint
     // console.log(representDiv)
     startY += representDiv.scrollTop
     if (Number(svgElement.style.height.slice(0, -2)) < representDiv.scrollHeight) {
-        svgElement.style.height = representDiv.scrollHeight+'px';
+        svgElement.style.height = representDiv.scrollHeight + 'px';
     }
     if (Number(svgElement.style.width.slice(0, -2)) < representDiv.scrollWidth) {
-        svgElement.style.width = representDiv.scrollWidth+'px';
+        svgElement.style.width = representDiv.scrollWidth + 'px';
     }
     let draw_line = function (start_X, start_Y, end_X, end_Y) {
         const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -3486,6 +3689,7 @@ var datatypeExp = ""
 // var scope=0
 var sleepTime = 1000
 var PAUSE_EXEC = false
+var extra_render_data = {}
 function handleKey(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
@@ -3547,6 +3751,7 @@ svgElement.style.position = "absolute"
 svgElement.style.top = "0px"
 svgElement.style.left = "0px"
 svgElement.style.zIndex = 4;
+svgElement.style.pointerEvents = 'none';
 const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
 marker.setAttribute("id", "arrowhead");
 marker.setAttribute("markerWidth", "10");
