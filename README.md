@@ -26,3 +26,5 @@ Current Progress:
 - Console I/O supported
 - user defined functions now supported
 - ScreenSave feature for saving visualizer output
+
+![SLL example code](https://i.imgur.com/i7J6w7z.png)
