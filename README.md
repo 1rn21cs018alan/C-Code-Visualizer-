@@ -4,7 +4,7 @@ Aims to enhance the understanding of data structures by animations and visualiza
 
 
 <b><h2>For reviewing the code, please view the code in "Data Structure visualizer mini project"</h2><br/>
-<h2>For downloading this project, please download "SingleFile.html" as raw file and open it on a browser (Chrome, Firefox)</h2></b>
+<h2>For downloading this project, please download <a href="https://raw.githubusercontent.com/1rn21cs018alan/C-Code-Visualizer-/refs/heads/main/SingleFile.html" target="_blank" download="SingleFile.html">"SingleFile.html"</a> as raw file and open it on a browser (Chrome, Firefox)</h2></b>
 
 Project in progress....
 
