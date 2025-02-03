@@ -2,6 +2,10 @@
 A offline Browser App that can run simple C code and show Visualisation for Common data structures.<br/>
 Aims to enhance the understanding of data structures by animations and visualizations and help with tracing C programs. 
 
+
+<b><h2>For reviewing the code, please view the code in "Data Structure visualizer mini project"</h2><br/>
+<h2>For downloading this project, please download "SingleFile.html" as raw file and open it on a browser (Chrome, Firefox)</h2></b>
+
 Project in progress....
 
 Current Progress:
