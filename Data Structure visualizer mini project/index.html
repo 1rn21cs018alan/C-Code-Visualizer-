@@ -6,6 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Data Structure Visualizer</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #openseadragon {
+      width: 100%;
+      height: 90vh;
+    }
+  </style>
+
 </head>
 
 <body>
@@ -21,22 +28,131 @@
       <input type="range" id="sleepTimeSlider" min="1" max="999" value="333">
       <p id="slider-speed">Speed: <span id="ExecutionSpeedValue">1.0x</span></p>
       <input type="button" class="pause-button" value="Pause" onclick=Pauseexecution()>
+      <img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAABGCAYAAABxLuKEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAFDSURBVHhe7dDRasQwEEPR/P9PtwQ6YBapqyR2u7bvAb20It7RAWAlX03wox2FcRoMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMYzCMwTAGwxgMY2w3THpo27van077498dMar7kdQBZ5QnvTNTUQdUXt3tVKajjqi07vy/Mi11TKVc/V9leuqoyunK3yt/auQPUN++m17ib8fFm9T3r6an+Ptx8QH1Rpre4jfi4kPqnXcZIX4nLnag3nIZJX4rLnai3nvNSPF7cbEj9WZltPjNuNjZx78bFwf47zd/fTsuLiK+Ny4uIr43Li4ivjcuLiK+Ny4uIr43Li4ivjcuLiK+Ny4uIr5XFXeLpIq7RVLF3SKp4m6RVHG3ALccxzeN1HezelocPQAAAABJRU5ErkJggg=="
+        class="screenshot-button" id="screenshotButton" title="Download Screenshot">
     </div>
   </header>
   <div class="sidebar">
     <div class="input-fields">
       <div class="cin-tag">
-        <textarea name="Cin" id="Cin">int main(){&#13;&#10;&Tab;return 0;&#13;&#10;}</textarea>
+        <div class="line-numbers" id="lineNumbers"></div>
+        <div name="Cin" id="Cin" contenteditable="true">
+          <span class="editor_line" contenteditable="false">struct stack{</span>
+          <span class="editor_line" contenteditable="false">&Tab;int * arr;</span>
+          <span class="editor_line" contenteditable="false">&Tab;int size,top;</span>
+          <span class="editor_line" contenteditable="false">};</span>
+          <span class="editor_line" contenteditable="false">typedef struct stack * STACK;</span>
+          <span class="editor_line" contenteditable="false"></span>
+          <span class="editor_line" contenteditable="false">struct queue{</span>
+          <span class="editor_line" contenteditable="false">&Tab;int * arr;</span>
+          <span class="editor_line" contenteditable="false">&Tab;int size,rear,front;</span>
+          <span class="editor_line" contenteditable="false">};</span>
+          <span class="editor_line" contenteditable="false">typedef struct queue * QUEUE;</span>
+          <span class="editor_line" contenteditable="false"></span>
+          <span class="editor_line" contenteditable="false">struct sll{</span>
+          <span class="editor_line" contenteditable="false">&Tab;struct sll * next;</span>
+          <span class="editor_line" contenteditable="false">&Tab;int info;</span>
+          <span class="editor_line" contenteditable="false">};</span>
+          <span class="editor_line" contenteditable="false">typedef struct sll * SLL;</span>
+          <span class="editor_line" contenteditable="false"></span>
+          <span class="editor_line" contenteditable="false">struct dll{</span>
+          <span class="editor_line" contenteditable="false">&Tab;struct dll * next;</span>
+          <span class="editor_line" contenteditable="false">&Tab;struct dll * prev;</span>
+          <span class="editor_line" contenteditable="false">&Tab;int info;</span>
+          <span class="editor_line" contenteditable="false">};</span>
+          <span class="editor_line" contenteditable="false">typedef struct dll * DLL;</span>
+          <span class="editor_line" contenteditable="false"></span>
+          <span class="editor_line" contenteditable="false">struct tree{</span>
+          <span class="editor_line" contenteditable="false">&Tab;struct tree * left;</span>
+          <span class="editor_line" contenteditable="false">&Tab;struct tree * right;</span>
+          <span class="editor_line" contenteditable="false">&Tab;int info;</span>
+          <span class="editor_line" contenteditable="false">};</span>
+          <span class="editor_line" contenteditable="false">typedef struct tree * TREE;</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true">STACK getStack(int size){</span>
+          <span class="editor_line" contenteditable="true">&Tab;STACK x;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x=(STACK)malloc(sizeof(struct stack));</span>
+          <span class="editor_line" contenteditable="true">&Tab;if(x==NULL){</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;// Memory error</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;exit(0);</span>
+          <span class="editor_line" contenteditable="true">&Tab;}</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->top=-1;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->size=size;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->arr=(int *)malloc(sizeof(int)*size);</span>
+          <span class="editor_line" contenteditable="true">&Tab;return x;</span>
+          <span class="editor_line" contenteditable="true">};</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true">QUEUE getQueue(int size){</span>
+          <span class="editor_line" contenteditable="true">&Tab;QUEUE x;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x=(QUEUE)malloc(sizeof(struct queue));</span>
+          <span class="editor_line" contenteditable="true">&Tab;if(x==NULL){</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;// Memory error</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;exit(0);</span>
+          <span class="editor_line" contenteditable="true">&Tab;}</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->front=-1;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->rear=0;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->size=size;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->arr=(int *)malloc(sizeof(int)*size);</span>
+          <span class="editor_line" contenteditable="true">&Tab;return x;</span>
+          <span class="editor_line" contenteditable="true">};</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true">SLL getSll(){</span>
+          <span class="editor_line" contenteditable="true">&Tab;SLL x;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x=(SLL)malloc(sizeof(struct sll));</span>
+          <span class="editor_line" contenteditable="true">&Tab;if(x==NULL){</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;// Memory error</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;exit(0);</span>
+          <span class="editor_line" contenteditable="true">&Tab;}</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->next=NULL;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->info=0;</span>
+          <span class="editor_line" contenteditable="true">&Tab;return x;</span>
+          <span class="editor_line" contenteditable="true">};</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true">DLL getDll(){</span>
+          <span class="editor_line" contenteditable="true">&Tab;DLL x;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x=(DLL)malloc(sizeof(struct dll));</span>
+          <span class="editor_line" contenteditable="true">&Tab;if(x==NULL){</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;// Memory error</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;exit(0);</span>
+          <span class="editor_line" contenteditable="true">&Tab;}</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->next=NULL;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->prev=NULL;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->info=0;</span>
+          <span class="editor_line" contenteditable="true">&Tab;return x;</span>
+          <span class="editor_line" contenteditable="true">};</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span class="editor_line" contenteditable="true">TREE getTree(){</span>
+          <span class="editor_line" contenteditable="true">&Tab;TREE x;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x=(TREE)malloc(sizeof(struct tree));</span>
+          <span class="editor_line" contenteditable="true">&Tab;if(x==NULL){</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;// Memory error</span>
+          <span class="editor_line" contenteditable="true">&Tab;&Tab;exit(0);</span>
+          <span class="editor_line" contenteditable="true">&Tab;}</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->left=NULL;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->right=NULL;</span>
+          <span class="editor_line" contenteditable="true">&Tab;x->info=0;</span>
+          <span class="editor_line" contenteditable="true">&Tab;return x;</span>
+          <span class="editor_line" contenteditable="true">};</span>
+          <span class="editor_line" contenteditable="true"></span>
+          <span id="Cin1" class="editor_line" contenteditable="false">int main(){</span>
+          <span id="Cin2" class="editor_line" contenteditable="true"> </span>
+          <span id="Cin2" class="editor_line" contenteditable="false">&Tab;return 0;</span>
+          <span id="Cin3" class="editor_line" contenteditable="false">}</span>
+          <!-- <span id="Cin4" contenteditable="false">HEHE</span> -->
+        </div>
       </div>
       <div class="cout-tag">
-        <textarea name="Cout" id="Cout"></textarea>
+        <div name="Cout" id="Cout"><span id="stdin" contenteditable="True"></span></div>
       </div>
     </div>
     <input type="button" class="compile-button" value="Compile" onclick=compile()>
   </div>
-  <div class="container">
+  <div class="container" id="container">
 
-    <div class="Represent" name="Represent">
+    <div class="Represent" name="Represent" id="visualization">
+
       <div class="outer-Represent" style="top: 145px;left:285px;">
         <div class="inner-box" id="one"></div>
         <!-- <hr class="center" id="line-1"></hr> -->
@@ -60,7 +176,7 @@
     <hr class="center-line">
 
     </hr>
-    <div class="Memory" name="Memory">
+    <div class="Memory" name="Memory" id="memoryVisualization">
       <div class="outer-Memory" style="top:20px;left:50px;">
         <div class="inner-Memory-box" id="three"></div>
         <!-- <hr class="center" id="line-2"></hr> -->
@@ -69,6 +185,10 @@
       </div>
 
     </div>
+  </div>
+  <div id="errorPopup" class="popup hidden">
+    <p id="errorMessage"></p>
+    <button id="closePopup">Close</button>
   </div>
   <script src="DataStructureVis.js"></script>
   <script src="index.js"></script>
@@ -82,6 +202,10 @@
     render_Variables();
     render_Memory();
   </script>
+  <script src="screen.js"></script>
+
+  <script src="codeEditor.js"></script>
+
 </body>
 
 </html>
