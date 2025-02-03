@@ -1,6 +1,6 @@
 # C-Code-Visualizer-
 A offline Browser App that can run simple C code and show Visualisation for Common data structures.<br/>
-Aims to improve better understanding of data structures by animations and visualizations. 
+Aims to enhance the understanding of data structures by animations and visualizations and help with tracing C programs. 
 
 Project in progress....
 
