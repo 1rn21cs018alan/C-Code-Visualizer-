@@ -2899,7 +2899,7 @@ function calloc(elem_num, elem_size) {
     }
     Memory[mem_loc]['size'] = elem_size * elem_num
     for (let i = 0; i < elem_num; i++) {
-        Memory[mem_loc]['value'][i] = 0
+        Memory[mem_loc]['value'][i*elem_size] = 0
     }
     return mem_loc
 }
